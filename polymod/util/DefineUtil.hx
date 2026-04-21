@@ -8,14 +8,6 @@ class DefineUtil
 {
 	// Only macros should be able to use these.
 	#if macro
-	public static function getDefineStringArrayRaw(key:String, ?defaultValue:Array<String> = null):Array<String>
-	{
-		if (defaultValue == null)
-			defaultValue = new Array<String>();
-		var value = Context.definedValue(key);
-		return value == null ? defaultValue : value.split(',');
-	}
-
 	public static function getDefineStringRaw(key:String, ?defaultValue:String = ''):String
 	{
 		var value = Context.definedValue(key);
@@ -28,11 +20,6 @@ class DefineUtil
 		return value == null ? defaultValue : (value == 'true');
 	}
 	#end
-
-	public static macro function getDefineStringArray(key:String, ?defaultValue:Array<String> = null):haxe.macro.Expr
-	{
-		return macro $v{getDefineStringArrayRaw(key, defaultValue)};
-	}
 
 	public static macro function getDefineString(key:String, ?defaultValue:String = ''):haxe.macro.Expr
 	{

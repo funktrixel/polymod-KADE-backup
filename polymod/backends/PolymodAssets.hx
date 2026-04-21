@@ -1,25 +1,45 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.backends;
 
+import polymod.fs.SysFileSystem;
+import polymod.fs.StubFileSystem;
+import polymod.fs.IFileSystem;
 import haxe.io.Bytes;
-import polymod.Polymod.Framework;
-import polymod.Polymod.FrameworkParams;
 import polymod.Polymod.PolymodErrorCode;
 import polymod.backends.IBackend;
-import polymod.backends.PolymodAssetLibrary;
+import polymod.Polymod.Framework;
+import polymod.Polymod.FrameworkParams;
 import polymod.format.ParseRules;
-import polymod.fs.PolymodFileSystem.IFileSystem;
-import polymod.fs.StubFileSystem;
-import polymod.fs.SysFileSystem;
-#if firetongue
-import firetongue.FireTongue;
-#end
+import polymod.backends.PolymodAssetLibrary;
 
 typedef PolymodAssetsParams =
 {
 	/**
 	 * the Haxe framework you're using (OpenFL, HEAPS, Kha, NME, etc..)
 	 */
-	framework:polymod.Framework,
+	framework:Framework,
 
 	/**
 	 * the file system to use to access mods.
@@ -33,7 +53,7 @@ typedef PolymodAssetsParams =
 
 	/**
 	 * paths to each mod's root directories.
-	 * This takes precedence over the 'Dir' parameter and the order matters -- mod files will load from first to last, with last taking precedence
+	 * This takes precedence over the "Dir" parameter and the order matters -- mod files will load from first to last, with last taking precedence
 	 */
 	dirs:Array<String>,
 
@@ -52,23 +72,7 @@ typedef PolymodAssetsParams =
 	/**
 	 * (optional) maps file extensions to asset types. This ensures e.g. text files with unfamiliar extensions are handled properly.
 	 */
-	?extensionMap:Map<String, PolymodAssetType>,
-	/**
-	 * (optional) if your assets folder is not named `assets/`, you can specify the proper name here
-	 * This prevents some bugs when calling `Assets.list()`, among other things.
-	 */
-	?assetPrefix:String,
-
-	/**
-	 * (optional) a FireTongue instance for Polymod to hook into for localization support
-	 */
-	#if firetongue
-	?firetongue:FireTongue,
-	#end
-	/**
-	 * (optional) whether to parse and allow for initialization of classes in script files
-	 */
-	?useScriptedClasses:Bool,
+	?extensionMap:Map<String, PolymodAssetType>
 }
 
 class PolymodAssets
@@ -76,26 +80,23 @@ class PolymodAssets
 	/**PUBLIC STATIC**/
 	public static function init(params:PolymodAssetsParams):PolymodAssetLibrary
 	{
-		var framework:polymod.Framework = params.framework;
+		var framework:Framework = params.framework;
 		if (framework == null)
 		{
 			framework = autoDetectFramework();
-			Polymod.notice(PolymodErrorCode.FRAMEWORK_AUTODETECT, 'Framework: Autodetect, going with $framework');
+			Polymod.notice(PolymodErrorCode.FRAMEWORK_AUTODETECT, " going with " + framework);
 		}
 		else
 		{
-			Polymod.notice(PolymodErrorCode.FRAMEWORK_INIT, 'Framework: User specified $framework');
+			Polymod.notice(PolymodErrorCode.FRAMEWORK_INIT, " user specified " + framework);
 		}
 		var backend:IBackend = switch (framework)
 		{
-			case CASTLE: new polymod.backends.CastleBackend();
 			case NME: new polymod.backends.NMEBackend();
-			case FLIXEL: new polymod.backends.FlixelBackend();
 			case OPENFL: new polymod.backends.OpenFLBackend();
-			case OPENFL_WITH_NODE: new polymod.backends.OpenFLWithNodeBackend();
 			case LIME: new polymod.backends.LimeBackend();
 			case HEAPS: new polymod.backends.HEAPSBackend();
-			case KHA: new polymod.backends.KhaBackend();
+			// case KHA: new polymod.backends.KhaBackend();
 			case CUSTOM:
 				if (params.customBackend != null)
 				{
@@ -110,23 +111,9 @@ class PolymodAssets
 		}
 		if (backend == null)
 		{
-			Polymod.error(PolymodErrorCode.FAILED_CREATE_BACKEND, 'Could not create a backend for framework: $framework');
+			Polymod.error(PolymodErrorCode.FAILED_CREATE_BACKEND, "could not create a backend for framework(" + framework + ")!");
 			return null;
 		}
-
-		#if firetongue
-		if (params.firetongue != null)
-		{
-			if (framework == polymod.Framework.NME
-				|| framework == polymod.Framework.HEAPS
-				|| framework == polymod.Framework.KHA
-				|| framework == polymod.Framework.CASTLE)
-			{
-				Polymod.error(PolymodErrorCode.FUNCTIONALITY_NOT_IMPLEMENTED,
-					'Polymod currently does not support FireTongue localization for ${framework}! Nag us on GitHub about it.');
-			}
-		}
-		#end
 
 		if (library != null)
 		{
@@ -140,21 +127,14 @@ class PolymodAssets
 			ignoredFiles: params.ignoredFiles,
 			extensionMap: params.extensionMap,
 			fileSystem: params.fileSystem,
-			assetPrefix: params.assetPrefix,
-			#if firetongue
-			firetongue: params.firetongue,
-			#end
 		});
 
-		if (backend.init(params.frameworkParams))
-		{
-			// Initialization successful.
-			return library;
-		}
-		else
-		{
-			return null;
-		}
+        if (backend.init(params.frameworkParams)) {
+          // Initialization successful.
+		return library;
+        } else {
+          return null;
+        }
 	}
 
 	public static function exists(id:String):Bool
@@ -185,24 +165,13 @@ class PolymodAssets
 	/**PRIVATE STATIC**/
 	private static var library:PolymodAssetLibrary;
 
-	/**
-	 * Determine the correct framework to use based on the current environment.
-	 * Powered by compile-time macros.
-	 * @return polymod.Framework
-	 */
-	private static function autoDetectFramework():polymod.Framework
+	private static function autoDetectFramework():Framework
 	{
-		#if castle
-		return CASTLE;
-		#end
 		#if heaps
 		return HEAPS;
 		#end
 		#if nme
 		return NME;
-		#end
-		#if flixel
-		return FLIXEL;
 		#end
 		#if (openfl && !nme)
 		return OPENFL;
@@ -219,17 +188,17 @@ class PolymodAssets
 
 @:enum abstract PolymodAssetType(String) from String to String
 {
-	var BYTES = 'BYTES';
-	var TEXT = 'TEXT';
-	var IMAGE = 'IMAGE';
-	var VIDEO = 'VIDEO';
-	var FONT = 'FONT';
-	var AUDIO_GENERIC = 'AUDIO_GENERIC';
-	var AUDIO_MUSIC = 'AUDIO_MUSIC';
-	var AUDIO_SOUND = 'AUDIO_SOUND';
-	var MANIFEST = 'MANIFEST';
-	var TEMPLATE = 'TEMPLATE';
-	var UNKNOWN = 'UNKNOWN';
+	var BYTES = "BYTES";
+	var TEXT = "TEXT";
+	var IMAGE = "IMAGE";
+	var VIDEO = "VIDEO";
+	var FONT = "FONT";
+	var AUDIO_GENERIC = "AUDIO_GENERIC";
+	var AUDIO_MUSIC = "AUDIO_MUSIC";
+	var AUDIO_SOUND = "AUDIO_SOUND";
+	var MANIFEST = "MANIFEST";
+	var TEMPLATE = "TEMPLATE";
+	var UNKNOWN = "UNKNOWN";
 
 	public static function fromString(str:String):PolymodAssetType
 	{

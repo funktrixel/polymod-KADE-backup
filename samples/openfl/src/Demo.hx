@@ -1,3 +1,28 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
+package;
+
 import lime.utils.Assets;
 import openfl.Assets;
 import openfl.display.DisplayObject;
@@ -8,7 +33,12 @@ import openfl.display.Sprite;
 import openfl.text.TextField;
 import openfl.text.TextFormatAlign;
 import openfl.utils.AssetType;
+import sys.FileSystem;
 
+/**
+ * ...
+ * @author 
+ */
 class Demo extends Sprite
 {
 	private var widgets:Array<ModWidget> = [];
@@ -52,16 +82,12 @@ class Demo extends Sprite
 
 	private function makeButtons()
 	{
-		var modDir:String = '../../../mods';
+		var modDir:String = "../../../mods";
 		#if mac
 		// account for <APPLICATION>.app/Contents/Resources
-		modDir = '../../../../../../mods';
+		modDir = "../../../../../../mods";
 		#end
-		#if sys
-		var mods = sys.FileSystem.readDirectory(modDir);
-		#else
-		var mods = [];
-		#end
+		var mods = FileSystem.readDirectory(modDir);
 		var xx = 10;
 		var yy = 200;
 		for (mod in mods)
@@ -91,9 +117,9 @@ class Demo extends Sprite
 		var limeLabel = getText(LEFT);
 		limeLabel.x = 10;
 		limeLabel.y = 400;
-		limeLabel.text = 'Asset System:';
+		limeLabel.text = "Asset System:";
 
-		limeToggle = new CheapButton(usingOpenFL ? 'openfl' : 'lime', onToggleOpenFL);
+		limeToggle = new CheapButton(usingOpenFL ? "openfl" : "lime", onToggleOpenFL);
 		limeToggle.x = 10;
 		limeToggle.y = 420;
 
@@ -107,11 +133,11 @@ class Demo extends Sprite
 
 		if (usingOpenFL)
 		{
-			limeToggle.setText('openfl');
+			limeToggle.setText("openfl");
 		}
 		else
 		{
-			limeToggle.setText('lime');
+			limeToggle.setText("lime");
 		}
 
 		reloadMods();
@@ -267,7 +293,7 @@ class Demo extends Sprite
 		{
 			var isXML:Bool = false;
 			var align = TextFormatAlign.CENTER;
-			if (t.indexOf('xml') != -1 || t.indexOf('json') != -1)
+			if (t.indexOf("xml") != -1 || t.indexOf("json") != -1)
 			{
 				isXML = true;
 				align = TextFormatAlign.LEFT;
@@ -283,7 +309,7 @@ class Demo extends Sprite
 			text.multiline = true;
 
 			var str = AssetsGetText(t);
-			text.text = (str != null ? str : 'null');
+			text.text = (str != null ? str : "null");
 
 			var caption = getText();
 			caption.x = xx;

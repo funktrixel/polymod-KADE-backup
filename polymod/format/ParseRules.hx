@@ -1,3 +1,26 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
 package polymod.format;
 
 import haxe.Json;
@@ -23,7 +46,7 @@ class ParseRules
 	{
 		var format:BaseParseFormat = switch (type)
 		{
-			case CSV: new CSVParseFormat(',', true);
+			case CSV: new CSVParseFormat(",", true);
 			case TSV: new TSVParseFormat();
 			case XML: new XMLParseFormat();
 			case JSON: new JSONParseFormat();
@@ -52,11 +75,11 @@ class ParseRules
 	public static function getDefault():ParseRules
 	{
 		var rules = new ParseRules();
-		rules.addFormat('csv', new CSVParseFormat(',', true));
-		rules.addFormat('tsv', new TSVParseFormat());
-		rules.addFormat('xml', new XMLParseFormat());
-		rules.addFormat('json', new JSONParseFormat());
-		rules.addFormat('txt', new PlainTextParseFormat());
+		rules.addFormat("csv", new CSVParseFormat(",", true));
+		rules.addFormat("tsv", new TSVParseFormat());
+		rules.addFormat("xml", new XMLParseFormat());
+		rules.addFormat("json", new JSONParseFormat());
+		rules.addFormat("txt", new PlainTextParseFormat());
 		return rules;
 	}
 }
@@ -78,7 +101,7 @@ class CSVParseFormat implements BaseParseFormat
 
 	private function get_isSimpleMode():Bool
 	{
-		return (delimeter == ',' && quotedCells == false);
+		return (delimeter == "," && quotedCells == false);
 	}
 
 	public function parse(str:String):CSV
@@ -89,9 +112,9 @@ class CSVParseFormat implements BaseParseFormat
 	public function append(baseText:String, appendText:String, id:String):String
 	{
 		var endLine:String = "\n";
-		if (baseText.indexOf('\r\n') != -1)
+		if (baseText.indexOf("\r\n") != -1)
 		{
-			endLine = '\r\n';
+			endLine = "\r\n";
 		}
 		if (lookForHeaders)
 		{
@@ -99,10 +122,10 @@ class CSVParseFormat implements BaseParseFormat
 			var appendCSV:polymod.format.CSV;
 
 			// Strip of a trailing endline from append if there is one
-			var appendEndLine = '\n';
-			if (appendText.indexOf('\r\n') != -1)
+			var appendEndLine = "\n";
+			if (appendText.indexOf("\r\n") != -1)
 			{
-				appendEndLine = '\r\n';
+				appendEndLine = "\r\n";
 			}
 			var appendLength = Util.uLength(appendText);
 			var appendLast = Util.uLastIndexOf(appendText, appendEndLine);
@@ -118,7 +141,7 @@ class CSVParseFormat implements BaseParseFormat
 			}
 			catch (msg:Dynamic)
 			{
-				Polymod.error(APPEND, 'CSV append error ($id): $msg');
+				Polymod.error(APPEND, "CSV Append error (" + id + ") : " + msg);
 				return baseText;
 			}
 
@@ -147,7 +170,7 @@ class CSVParseFormat implements BaseParseFormat
 			{
 				if (compareFields < Std.int(baseCSV.fields.length / 2))
 				{
-					Polymod.error(APPEND, 'Mod file ($id) is missing most or all of the expected header fields', INIT);
+					Polymod.error(APPEND, "Mod file(" + id + ") is missing most or all of the expected header fields", INIT);
 				}
 			}
 
@@ -155,7 +178,7 @@ class CSVParseFormat implements BaseParseFormat
 
 			for (r in 0...appendCSV.grid.length)
 			{
-				var line = '';
+				var line = "";
 				for (bi in 0...baseCSV.fields.length)
 				{
 					var baseField = baseCSV.fields[bi];
@@ -165,7 +188,7 @@ class CSVParseFormat implements BaseParseFormat
 						var appendValue = appendCSV.grid[r][appendField];
 						if (appendValue == null)
 						{
-							appendValue = '';
+							appendValue = "";
 						}
 						line += appendValue;
 					}
@@ -191,7 +214,12 @@ class CSVParseFormat implements BaseParseFormat
 
 			for (baseField in missingFields)
 			{
-				Polymod.warning(PolymodErrorCode.APPEND, 'Mod file ($id) is missing expected field "$baseField", values will default to empty string.', INIT);
+				Polymod.warning(PolymodErrorCode.APPEND,
+					"Mod file("
+					+ id
+					+ ") missing expected field \""
+					+ baseField
+					+ "\", values will default to empty string.", INIT);
 			}
 
 			return finalText;
@@ -210,14 +238,14 @@ class CSVParseFormat implements BaseParseFormat
 		}
 		catch (msg:Dynamic)
 		{
-			Polymod.error(MERGE, 'CSV merge error ($id): $msg');
+			Polymod.error(MERGE, "CSV Merge error (" + id + ") : " + msg);
 			return baseText;
 		}
 
 		for (row in mergeCSV.grid)
 		{
-			var flag = row.length > 0 ? row[0] : '';
-			if (flag != '')
+			var flag = row.length > 0 ? row[0] : "";
+			if (flag != "")
 			{
 				for (i in 0...baseCSV.grid.length)
 				{
@@ -258,9 +286,9 @@ class CSVParseFormat implements BaseParseFormat
 
 		var strSoFar = buf.toString();
 
-		if (strSoFar.indexOf('\n') == -1)
+		if (strSoFar.indexOf("\n") == -1)
 		{
-			buf.add(Std.string('\r\n'));
+			buf.add(Std.string("\r\n"));
 		}
 
 		var grid = csv.grid;
@@ -287,7 +315,7 @@ class CSVParseFormat implements BaseParseFormat
 			}
 			if (iy != grid.length - 1)
 			{
-				buf.add(Std.string('\r\n'));
+				buf.add(Std.string("\r\n"));
 			}
 		}
 
@@ -320,8 +348,8 @@ class TSVParseFormat implements BaseParseFormat
 		var mergeTSV = polymod.format.TSV.parse(mergeText);
 		for (row in mergeTSV.grid)
 		{
-			var flag = row.length > 0 ? row[0] : '';
-			if (flag != '')
+			var flag = row.length > 0 ? row[0] : "";
+			if (flag != "")
 			{
 				for (i in 0...baseTSV.grid.length)
 				{
@@ -362,9 +390,9 @@ class TSVParseFormat implements BaseParseFormat
 
 		var strSoFar = buf.toString();
 
-		if (strSoFar.indexOf('\n') == -1)
+		if (strSoFar.indexOf("\n") == -1)
 		{
-			buf.add(Std.string('\r\n'));
+			buf.add(Std.string("\r\n"));
 		}
 
 		var grid = tsv.grid;
@@ -383,7 +411,7 @@ class TSVParseFormat implements BaseParseFormat
 			}
 			if (iy != grid.length - 1)
 			{
-				buf.add(Std.string('\r\n'));
+				buf.add(Std.string("\r\n"));
 			}
 		}
 
@@ -404,23 +432,23 @@ class LinesParseFormat implements BaseParseFormat // <Array<String>>
 
 	public function parse(str:String):Array<String>
 	{
-		if (str == null || str == '')
+		if (str == null || str == "")
 			return [];
-		var other = '';
-		var endl = '';
+		var other = "";
+		var endl = "";
 		switch (endline)
 		{
 			case LF:
-				endl = '\n';
+				endl = "\n";
 			case CR:
-				endl = '\r';
+				endl = "\r";
 			case CRLF:
-				endl = '\r\n';
+				endl = "\r\n";
 			default:
-				endl = '\r';
-				other = '\n';
+				endl = "\r";
+				other = "\n";
 		}
-		if (other == '')
+		if (other == "")
 		{
 			return str.split(endl);
 		}
@@ -439,9 +467,9 @@ class LinesParseFormat implements BaseParseFormat // <Array<String>>
 
 	public function merge(baseText:String, mergeText:String, id:String):String
 	{
-		if (baseText == null || mergeText == '')
+		if (baseText == null || mergeText == "")
 			return baseText;
-		if (baseText == null || mergeText == '')
+		if (baseText == null || mergeText == "")
 			return baseText;
 		var lines = parse(baseText);
 		if (lines == null || lines.length <= 0)
@@ -474,10 +502,10 @@ class LinesParseFormat implements BaseParseFormat // <Array<String>>
 	{
 		return switch (endline)
 		{
-			case LF: '\n';
-			case CR: '\r';
-			case CRLF: '\r\n';
-			default: '\n';
+			case LF: "\n";
+			case CR: "\r";
+			case CRLF: "\r\n";
+			default: "\n";
 		}
 	}
 }
@@ -530,7 +558,7 @@ class XMLParseFormat implements BaseParseFormat // <Xml>
 		}
 		catch (msg:Dynamic)
 		{
-			throw 'Error parsing XML files during merge ($id): $msg';
+			throw "Error parsing XML files during merge (" + id + ") " + msg;
 		}
 
 		try
@@ -539,7 +567,7 @@ class XMLParseFormat implements BaseParseFormat // <Xml>
 		}
 		catch (msg:Dynamic)
 		{
-			throw 'Error combining XML files during merge ($id): $msg';
+			throw "Error combining XML files during merge (" + id + ") " + msg;
 		}
 
 		return print(basex);
@@ -583,31 +611,32 @@ class JSONParseFormat implements BaseParseFormat
 
 	public function parse(str:String):Dynamic
 	{
-		var result = Json.parse(~/(\r|\n|\t)/g.replace(str, ''));
-		return result;
+		return Json.parse(str);
 	}
 
 	public function append(baseText:String, appendText:String, id:String):String
 	{
-		var lastBracket = Util.uLastIndexOf(baseText, '}');
+		var lastBracket = Util.uLastIndexOf(baseText, "}");
 		var baseFirst = Util.uSubstr(baseText, 0, lastBracket);
 		var baseEnd = Util.uSubstr(baseText, lastBracket, baseText.length);
 
-		var firstAppendBracket = Util.uIndexOf(appendText, '{');
-		var lastAppendBracket = Util.uLastIndexOf(appendText, '}');
+		var firstAppendBracket = Util.uIndexOf(appendText, "{");
+		var lastAppendBracket = Util.uLastIndexOf(appendText, "}");
 		var injectText = Util.uSubstring(appendText, firstAppendBracket + 1, lastAppendBracket);
 
-		if (injectText == null || injectText == '')
+		if (injectText == null || injectText == "")
 			return baseText;
 
-		// var whiteSpace = [32,10,13,9]; //' ','\n','\r','\t'
+		// var whiteSpace = [32,10,13,9]; //" ","\n","\r","\t"
 
 		baseFirst = Util.uTrimFinalEndlines(baseFirst);
 		injectText = Util.uTrimFinalEndlines(injectText);
 		injectText = Util.uTrimFirstEndlines(injectText);
 		baseEnd = Util.uTrimFinalEndlines(baseEnd);
 
-		return '$baseFirst,\n$injectText$baseEnd';
+		var comma = ",";
+
+		return baseFirst + comma + "\n" + injectText + baseEnd;
 	}
 
 	public function merge(baseText:String, mergeText:String, id:String):String
@@ -634,7 +663,7 @@ class JSONParseFormat implements BaseParseFormat
 			return baseText;
 		}
 
-		if (Reflect.hasField(merge, 'merge'))
+		if (Reflect.hasField(merge, "merge"))
 		{
 			if (Std.isOfType(merge.merge, Array))
 			{
@@ -646,25 +675,18 @@ class JSONParseFormat implements BaseParseFormat
 
 					target = entry.target;
 					payload = entry.payload;
-					try
-					{
-						base = _mergeJson(base, entry, id);
-					}
-					catch (msg:Dynamic)
-					{
-						Polymod.error(MERGE, 'JSON merge error ($id): could not merge payload "${Json.stringify(payload)}" into target : $msg');
-					}
+					base = _mergeJson(base, entry, id);
 				}
 			}
 			else
 			{
 				Polymod.error(MERGE,
-					'JSON merge error ($id): merge file must contain a single top-level array named "merge" (expected an array, found an object)');
+					"JSON merge error (" + id + "): merge file must contain a single top-level array named \"merge\"! (Found an object, not an array)");
 			}
 		}
 		else
 		{
-			Polymod.error(MERGE, 'JSON merge error ($id): merge file must contain a single top-level array named "merge"');
+			Polymod.error(MERGE, "JSON merge error (" + id + "): merge file must contain a single top-level array named \"merge\"!");
 		}
 		return print(base);
 	}
@@ -676,26 +698,25 @@ class JSONParseFormat implements BaseParseFormat
 		var currTarget = sig[0];
 		if (currTarget == null)
 		{
-			Polymod.warning(MERGE, 'JSON merge failed ($id), sig was $sig');
+			Polymod.warning(MERGE, "JSON merge failed (" + id + "), sig was " + sig);
 			return obj;
 		}
 
 		var done = false;
 		var last = obj;
 		var i:Int = 0;
-		var signatureSoFar = '';
-		var struct:
-			{
-				next:Dynamic,
-				parent:Dynamic,
-				arrIndex:Int,
-				target:String
-			} = {
-				next: null,
-				parent: null,
-				arrIndex: -1,
-				target: null
-			};
+		var signatureSoFar = "";
+		var struct:{
+			next:Dynamic,
+			parent:Dynamic,
+			arrIndex:Int,
+			target:String
+		} = {
+			next: null,
+			parent: null,
+			arrIndex: -1,
+			target: null
+		};
 		var next = null;
 		while (!done)
 		{
@@ -709,14 +730,14 @@ class JSONParseFormat implements BaseParseFormat
 				next = struct.next;
 			}
 
-			if (signatureSoFar != '')
-				signatureSoFar += '.';
+			if (signatureSoFar != "")
+				signatureSoFar += ".";
 			signatureSoFar += _targSigElementToString(currTarget);
 			i++;
 
 			if (next == null)
 			{
-				Polymod.warning(MERGE, 'JSON merge failed ($id), could not find object "${signatureSoFar}"');
+				Polymod.warning(MERGE, "JSON merge failed (" + id + "), could not find object \"" + signatureSoFar + "\")");
 				done = true;
 			}
 			else
@@ -745,14 +766,14 @@ class JSONParseFormat implements BaseParseFormat
 			{
 				if (arri >= 0)
 				{
-					str += '[$arri]';
+					str += "[" + arri + "]";
 				}
 			}
 		}
 		return str;
 	}
 
-	private function _inject(obj:Dynamic, target:String, arrIndex:Int, payload:Dynamic, signatureSoFar:String = '')
+	private function _inject(obj:Dynamic, target:String, arrIndex:Int, payload:Dynamic, signatureSoFar:String = "")
 	{
 		if (arrIndex == -1)
 		{
@@ -791,7 +812,7 @@ class JSONParseFormat implements BaseParseFormat
 		}
 	}
 
-	private function _mergeObjects(a:Dynamic, b:Dynamic, signatureSoFar:String = ''):Dynamic
+	private function _mergeObjects(a:Dynamic, b:Dynamic, signatureSoFar:String = ""):Dynamic
 	{
 		if (Std.isOfType(a, Array) && Std.isOfType(b, Array))
 		{
@@ -822,7 +843,7 @@ class JSONParseFormat implements BaseParseFormat
 						// If a & b share a field, merge that field recursively
 						var aValue = Reflect.field(a, field);
 						var bValue = Reflect.field(b, field);
-						var mergedValue = copyVal(_mergeObjects(aValue, bValue, '$signatureSoFar.$field'));
+						var mergedValue = copyVal(_mergeObjects(aValue, bValue, signatureSoFar + "." + field));
 						Reflect.setField(a, field, mergedValue);
 					}
 					else
@@ -836,9 +857,9 @@ class JSONParseFormat implements BaseParseFormat
 		else
 		{
 			// if they're incompatible types, return a
-			var aArr = Std.isOfType(a, Array) ? 'array' : 'object';
-			var bArr = Std.isOfType(b, Array) ? 'array' : 'object';
-			Polymod.warning(MERGE, "JSON can't merge @ (" + signatureSoFar + ") because base is (" + aArr + ") but payload is (" + bArr + ')');
+			var aArr = Std.isOfType(a, Array) ? "array" : "object";
+			var bArr = Std.isOfType(b, Array) ? "array" : "object";
+			Polymod.warning(MERGE, "JSON can't merge @ (" + signatureSoFar + ") because base is (" + aArr + ") but payload is (" + bArr + ")");
 		}
 		return a;
 	}
@@ -872,19 +893,17 @@ class JSONParseFormat implements BaseParseFormat
 		return false;
 	}
 
-	private function _descend(obj:Dynamic, target:TargetSignatureElement, signatureSoFar:String = '', struct:
-		{
-			next:Dynamic,
-			parent:Dynamic,
-			arrIndex:Int,
-			target:String
-		} = null):
-		{
-			next:Dynamic,
-			parent:Dynamic,
-			arrIndex:Int,
-			target:String
-		}
+	private function _descend(obj:Dynamic, target:TargetSignatureElement, signatureSoFar:String = "", struct:{
+		next:Dynamic,
+		parent:Dynamic,
+		arrIndex:Int,
+		target:String
+	} = null):{
+		next:Dynamic,
+		parent:Dynamic,
+		arrIndex:Int,
+		target:String
+	}
 	{
 		if (struct == null)
 		{
@@ -902,7 +921,7 @@ class JSONParseFormat implements BaseParseFormat
 
 		if (Reflect.hasField(obj, target.value) == false)
 		{
-			Polymod.warning(MERGE, "JSON merge error : object (" + signatureSoFar + ") has no field (" + target.value + ')');
+			Polymod.warning(MERGE, "JSON merge error : object (" + signatureSoFar + ") has no field (" + target.value + ")");
 			return null;
 		}
 		var next = Reflect.field(obj, target.value);
@@ -923,7 +942,7 @@ class JSONParseFormat implements BaseParseFormat
 				var arr:Array<Dynamic> = cast next;
 				var arrIndeces = target.arrayIndeces.copy();
 				var done = false;
-				signatureSoFar += '.${target.value}';
+				signatureSoFar += "." + target.value;
 				while (arrIndeces.length > 0)
 				{
 					var arrIndex = arrIndeces.shift();
@@ -939,17 +958,22 @@ class JSONParseFormat implements BaseParseFormat
 						}
 						else
 						{
-							Polymod.warning(MERGE, 'JSON merge error : invalid array access [$arrIndex] on target "$signatureSoFar"');
+							Polymod.warning(MERGE, "JSON merge error : invalid array access [" + arrIndex + "] on target \"" + signatureSoFar + "\"");
 							done = true;
 						}
 					}
 					else
 					{
 						Polymod.warning(MERGE,
-							'JSON merge error : array index ($arrIndex) out of bounds on target "$signatureSoFar" with length ${arr.length}');
+							"JSON merge error : array index ("
+							+ arrIndex
+							+ ") out of bounds on target \""
+							+ signatureSoFar
+							+ "\" with length "
+							+ arr.length);
 						done = true;
 					}
-					signatureSoFar += '[$arrIndex]';
+					signatureSoFar += "[" + arrIndex + "]";
 				}
 			}
 			else
@@ -965,18 +989,18 @@ class JSONParseFormat implements BaseParseFormat
 		if (str == null)
 			return [];
 		var result = [];
-		var arr = str.split('.');
+		var arr = str.split(".");
 		for (bit in arr)
 		{
-			if (bit.indexOf('[') != -1)
+			if (bit.indexOf("[") != -1)
 			{
-				var arr2 = bit.split('[');
+				var arr2 = bit.split("[");
 				var value = arr2.shift();
 				var arrayIndeces = [];
 				while (arr2.length > 0)
 				{
 					var value2 = arr2.shift();
-					value2 = Util.uTrimFinalCharIf(value2, ']');
+					value2 = Util.uTrimFinalCharIf(value2, "]");
 					var arrIndex = Std.parseInt(value2);
 					if (arrIndex != null && arrIndex >= 0)
 					{
@@ -984,7 +1008,7 @@ class JSONParseFormat implements BaseParseFormat
 					}
 					else
 					{
-						Polymod.warning(MERGE, "JSON merge error: found invalid array index (" + value2 + ") in signature (" + str + ')');
+						Polymod.warning(MERGE, "JSON merge error: found invalid array index (" + value2 + ") in signature (" + str + ")");
 						break;
 					}
 				}
@@ -1022,22 +1046,22 @@ class PlainTextParseFormat implements BaseParseFormat // <String>
 	{
 		var lastChar = Util.uCharAt(baseText, Util.uLength(baseText) - 1);
 		var lastLastChar = Util.uCharAt(baseText, Util.uLength(baseText) - 1);
-		var joiner = '';
+		var joiner = "";
 
-		var endLine = '\n';
+		var endLine = "\n";
 
-		var crIndex = Util.uIndexOf(baseText, '\r');
-		var lfIndex = Util.uIndexOf(baseText, '\n');
+		var crIndex = Util.uIndexOf(baseText, "\r");
+		var lfIndex = Util.uIndexOf(baseText, "\n");
 
 		if (crIndex != -1)
 		{
 			if (lfIndex == crIndex + 1)
 			{
-				endLine = '\r\n';
+				endLine = "\r\n";
 			}
 		}
 
-		if (lastChar != '\n')
+		if (lastChar != "\n")
 		{
 			joiner = endLine;
 		}
@@ -1047,7 +1071,7 @@ class PlainTextParseFormat implements BaseParseFormat // <String>
 
 	public function merge(baseText:String, mergeText:String, id:String):String
 	{
-		Polymod.warning(MERGE, '($id) Plain text files do not support merge functionality!');
+		Polymod.warning(MERGE, "(" + id + ") Plain text does not support merging!");
 		return baseText;
 	}
 

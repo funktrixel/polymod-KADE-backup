@@ -21,24 +21,64 @@
  * 
  */
 
-package polymod.backends;
+package samples.heaps;
 
-#if !kha
-class KhaBackend extends StubBackend
+import hxd.App;
+import polymod.Polymod;
+import polymod.Polymod.PolymodError;
+
+class Main extends hxd.App
 {
-	public function new()
+	static function main()
 	{
-		super();
-		Polymod.error(FAILED_CREATE_BACKEND, "KhaBackend requires the kha library, did you forget to install it?");
+		hxd.Res.initLocal();
+		new Main();
+	}
+
+	function bkg()
+	{
+		var spr = new h2d.Sprite(s2d);
+		spr.x = 0;
+		spr.y = 0;
+		var tile = h2d.Tile.fromColor(0xFFFFFF, 1, 1);
+		tile.scaleToSize(s2d.width, s2d.height);
+		var bmp = new h2d.Bitmap(tile, spr);
+		bmp.x = 0;
+		bmp.y = 0;
+	}
+
+	private var demo:Demo = null;
+
+	override function init()
+	{
+		bkg();
+		loadDemo();
+	}
+
+	private function loadDemo()
+	{
+		demo = new Demo(s2d, onModChange);
+	}
+
+	private function onModChange(arr:Array<String>)
+	{
+		loadMods(arr);
+		demo.refresh();
+	}
+
+	private function loadMods(dirs:Array<String>)
+	{
+		var modRoot = "mods";
+		Polymod.init({
+			modRoot: modRoot,
+			dirs: dirs,
+			errorCallback: onError,
+			ignoredFiles: Polymod.getDefaultIgnoreList()
+		});
+	}
+
+	private function onError(error:PolymodError)
+	{
+		trace(error.severity + "(" + error.code.toUpperCase() + "):" + error.message);
 	}
 }
-#else
-class KhaBackend extends StubBackend
-{
-	public function new()
-	{
-		super();
-		Polymod.error(FAILED_CREATE_BACKEND, "Kha support in Polymod has not been implemented yet");
-	}
-}
-#end

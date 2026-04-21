@@ -1,3 +1,26 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package demo;
 
 import openfl.display.DisplayObject;
@@ -13,9 +36,10 @@ import openfl.utils.AssetType;
 import openfl.events.Event;
 import sys.FileSystem;
 
-@:hscript({
-	context: [Std, Math] // Std and Math will be included in all scripts.
-})
+/**
+ * ...
+ * @author 
+ */
 class Simulation extends Sprite implements polymod.hscript.HScriptable
 {
 	private var bees:Array<Bee>;
@@ -34,8 +58,8 @@ class Simulation extends Sprite implements polymod.hscript.HScriptable
 		bees = [];
 		flowers = [];
 
-		numBees = loadInt('bees.txt');
-		numFlowers = loadInt('flowers.txt');
+		numBees = loadInt("bees.txt");
+		numFlowers = loadInt("flowers.txt");
 
 		if (numBees <= 0)
 			numBees = 1;
@@ -46,15 +70,15 @@ class Simulation extends Sprite implements polymod.hscript.HScriptable
 
 		score = new TextField();
 		addChild(score);
-		score.text = 'Honey collected: 0';
+		score.text = "Honey collected: 0";
 
 		Lib.current.stage.addEventListener(Event.ENTER_FRAME, onEnterFrame, false, 0, true);
 	}
 
 	public function loadInt(file:String):Int
 	{
-		var str = Assets.getText('data/$file');
-		if (str != null && str != '')
+		var str = Assets.getText("data/" + file);
+		if (str != null && str != "")
 		{
 			var i = Std.parseInt(str);
 			if (i == null)
@@ -94,20 +118,13 @@ class Simulation extends Sprite implements polymod.hscript.HScriptable
 		}
 	}
 
-	@:hscript({
-		context: [numFlowers, numBees, distTest, makeFlower, makeHome, makeBee, home],
-		pathName: 'demo/Simulation/initSimulation'
-	})
+	@:hscript(Std, Math, numFlowers, numBees, distTest, makeFlower, makeHome, makeBee, home)
 	private function init():Void
 	{
 		if (script_error != null)
 		{
-			trace('hscript failed to load or threw: $script_error');
+			trace('hscript failed to load or threw: ' + script_error);
 			trace('TODO: Do something to recover from this failure.');
-		}
-		if (script_result == null)
-		{
-			trace('hscript had no result');
 		}
 	}
 
@@ -122,7 +139,7 @@ class Simulation extends Sprite implements polymod.hscript.HScriptable
 		score.text = script_result;
 	}
 
-	@:hscript(bee, elapsed, home, moveToward, isTouching, getClosestFlower, getRandomFlower, emptyFlower, updateScore)
+	@:hscript(Math, bee, elapsed, home, moveToward, isTouching, getClosestFlower, getRandomFlower, emptyFlower, updateScore)
 	private function updateBee(bee:Bee, elapsed:Float)
 	{
 	}

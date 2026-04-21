@@ -1,3 +1,26 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.backends;
 
 import haxe.xml.Fast;
@@ -41,7 +64,7 @@ class NMEBackend implements IBackend
 	{
 	}
 
-	public function init(?params:FrameworkParams):Bool
+    public function init(?params:FrameworkParams):Bool
 	{
 		restoreDefaultAssets();
 
@@ -83,13 +106,13 @@ class NMEBackend implements IBackend
 					nme.Assets.byteFactory.set(info.path, function()
 					{
 						var bytes = null;
-						if (polymodLibrary.fileSystem.exists(modFile))
+						if (p.fileSystem.exists(modFile))
 						{
-							bytes = polymodLibrary.fileSystem.getFileBytes(modFile);
+							bytes = p.fileSystem.getFileBytes(modFile);
 						}
 						else
 						{
-							bytes = polymodLibrary.fileSystem.getFileBytes(key);
+							bytes = p.fileSystem.getFileBytes(key);
 						}
 						var origText = Std.string(bytes);
 						var newText = polymodLibrary.mergeAndAppendText(key, origText);
@@ -103,7 +126,7 @@ class NMEBackend implements IBackend
 			}
 		}
 
-		return true;
+        return true;
 	}
 
 	public function destroy()
@@ -164,16 +187,6 @@ class NMEBackend implements IBackend
 		return Assets.getText(id);
 	}
 
-	public function list(type:PolymodAssetType = null):Array<String>
-	{
-		throw 'Function not implemented';
-	}
-
-	public function getPath(id:String):String
-	{
-		throw 'Function not implemented';
-	}
-
 	public function clearCache()
 	{
 		for (key in Assets.info.keys())
@@ -192,7 +205,7 @@ class NMEBackend implements IBackend
 
 	public function stripAssetsPrefix(id:String):String
 	{
-		if (Util.uIndexOf(id, 'assets/') == 0 || Util.uIndexOf(id, 'Assets/') == 0)
+		if (Util.uIndexOf(id, "assets/") == 0 || Util.uIndexOf(id, "Assets/") == 0)
 		{
 			id = Util.uSubstring(id, 7);
 		}

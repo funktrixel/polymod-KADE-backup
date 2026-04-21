@@ -1,21 +1,39 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.fs;
 
 #if sys
 import polymod.Polymod.ModMetadata;
-import polymod.fs.PolymodFileSystem;
 import polymod.util.Util;
 
-/**
- * An implementation of IFileSystem which accesses files from the local directory.
- * This is the default file system for desktop platforms.
- */
 class SysFileSystem implements IFileSystem
 {
 	public var modRoot(default, null):String;
 
-	public function new(params:PolymodFileSystemParams)
+	public function new(modRoot:String)
 	{
-		this.modRoot = params.modRoot;
+		this.modRoot = modRoot;
 	}
 
 	public inline function exists(path:String)
@@ -51,7 +69,7 @@ class SysFileSystem implements IFileSystem
 		{
 			var j = l - i - 1;
 			var dir = dirs[j];
-			var testDir = '$modRoot/$dir';
+			var testDir = modRoot + "/" + dir;
 			if (!isDirectory(testDir) || !exists(testDir))
 			{
 				dirs.splice(j, 1);
@@ -66,36 +84,38 @@ class SysFileSystem implements IFileSystem
 		{
 			var meta:ModMetadata = null;
 
-			var metaFile = Util.pathJoin(modId, PolymodConfig.modMetadataFile);
-			var iconFile = Util.pathJoin(modId, PolymodConfig.modIconFile);
-
+			var metaFile = Util.pathJoin(modId, "_polymod_meta.json");
+			var iconFile = Util.pathJoin(modId, "_polymod_icon.png");
+			var packFile = Util.pathJoin(modId, "_polymod_pack.txt");
 			if (!exists(metaFile))
 			{
-				Polymod.warning(MISSING_META, 'Could not find mod metadata file: $metaFile');
-				return null;
+				Polymod.warning(MISSING_META, "Could not find mod metadata file: \"" + metaFile + "\"");
 			}
 			else
 			{
 				var metaText = getFileContent(metaFile);
 				meta = ModMetadata.fromJsonStr(metaText);
-				if (meta == null)
-					return null;
 			}
-
 			if (!exists(iconFile))
 			{
-				Polymod.warning(MISSING_ICON, 'Could not find mod icon file: $iconFile');
+				Polymod.warning(MISSING_ICON, "Could not find mod icon file: \"" + iconFile + "\"");
 			}
 			else
 			{
 				var iconBytes = getFileBytes(iconFile);
 				meta.icon = iconBytes;
 			}
+			if (exists(packFile))
+			{
+				meta.isModPack = true;
+				var packText = getFileContent(packFile);
+				meta.modPack = @:privateAccess Polymod.getModPack(packText);
+			}
 			return meta;
 		}
 		else
 		{
-			Polymod.error(MISSING_MOD, 'Could not find mod directory: $modId');
+			Polymod.error(MISSING_MOD, "Could not find mod directory: \"" + modId + "\"");
 		}
 		return null;
 	}
@@ -106,10 +126,10 @@ class SysFileSystem implements IFileSystem
 		for (i in 0...all.length)
 		{
 			var f = all[i];
-			var stri = Util.uIndexOf(f, path + '/');
+			var stri = Util.uIndexOf(f, path + "/");
 			if (stri == 0)
 			{
-				f = Util.uSubstr(f, Util.uLength(path + '/'), Util.uLength(f));
+				f = Util.uSubstr(f, Util.uLength(path + "/"), Util.uLength(f));
 				all[i] = f;
 			}
 		}

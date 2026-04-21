@@ -1,39 +1,44 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
 package polymod.util;
 
-import haxe.io.Path;
-import haxe.Utf8;
+import polymod.fs.IFileSystem;
+import polymod.Polymod;
 import polymod.Polymod.PolymodError;
 import polymod.Polymod.PolymodErrorType;
-import polymod.Polymod;
-import polymod.format.BaseParseFormat;
 import polymod.format.CSV;
+import polymod.format.ParseRules;
 import polymod.format.ParseRules.CSVParseFormat;
 import polymod.format.ParseRules.TextFileFormat;
-import polymod.format.ParseRules;
-import polymod.fs.PolymodFileSystem.IFileSystem;
+import polymod.format.BaseParseFormat;
 #if unifill
 import unifill.Unifill;
 #end
+import haxe.Utf8;
 
 class Util
 {
-	/**
-	 * For a given file, return a list of all its parent directories.
-	 * @param filePath
-	 * @return Array<String>
-	 */
-	public static function listAllParentDirs(filePath:String):Array<String>
-	{
-		var parentDirs:Array<String> = new Array<String>();
-		var parentDir:String = filePath;
-		while (parentDir != null && parentDir != "")
-		{
-			parentDirs.push(parentDir);
-			parentDir = Path.directory(parentDir);
-		}
-		return parentDirs;
-	}
-
 	public static function mergeAndAppendText(baseText:String, id:String, dirs:Array<String>, getModText:String->String->String, fileSystem:IFileSystem,
 			parseRules:ParseRules = null):String
 	{
@@ -55,7 +60,7 @@ class Util
 	}
 
 	/**
-	 * Looks for a '_merge' entry for an asset and tries to merge its contents into the original
+	 * Looks for a "_merge" entry for an asset and tries to merge its contents into the original
 	 * With the following rules:
 	 * - Only applies to XML, TSV, and CSV files (identified by extension)
 	 * - Adds single nodes from the merged asset into the original
@@ -66,11 +71,11 @@ class Util
 	 * @param	mergeRules	formatting rules to help with merging
 	 * @return
 	 */
-	public static function mergeText(baseText:String, id:String, theDir:String = '', getModText:String->String->String, parseRules:ParseRules = null):String
+	public static function mergeText(baseText:String, id:String, theDir:String = "", getModText:String->String->String, parseRules:ParseRules = null):String
 	{
 		var extension = uExtension(id, true);
 		id = stripAssetsPrefix(id);
-		var mergeFile = PolymodConfig.mergeFolder + sl() + id;
+		var mergeFile = "_merge" + sl() + id;
 		// try the path first
 		var format:BaseParseFormat = parseRules.get(id);
 		if (format == null)
@@ -104,7 +109,7 @@ class Util
 		}
 		if (format != null)
 		{
-			var appendText = getModText(Util.pathJoin(PolymodConfig.appendFolder, id), theDir);
+			var appendText = getModText(Util.pathJoin("_append", id), theDir);
 			return format.append(baseText, appendText, id);
 		}
 		return baseText;
@@ -114,7 +119,7 @@ class Util
 	{
 		var lastChar = uCharAt(baseText, uLength(baseText) - 1);
 		var lastLastChar = uCharAt(baseText, uLength(baseText) - 1);
-		var joiner = '';
+		var joiner = "";
 		var endLine = "\n";
 		var crIndex = uIndexOf(baseText, "\r");
 		var lfIndex = uIndexOf(baseText, "\n");
@@ -129,7 +134,7 @@ class Util
 			joiner = endLine;
 		}
 
-		var otherEndline = endLine == '\n' ? '\r\n' : '\n';
+		var otherEndline = endLine == "\n" ? "\r\n" : "\n";
 		appendText = uSplitReplace(appendText, otherEndline, endLine);
 
 		return uCombine([baseText, joiner, appendText]);
@@ -175,21 +180,9 @@ class Util
 		return txt;
 	}
 
-	public static function stripPathPrefix(value:String, prefix:String):String
-	{
-		var result = value;
-		if (result.indexOf(prefix) == 0)
-			result = result.substr(prefix.length);
-
-		if (result.indexOf('/') == 0)
-			result = result.substr(1);
-
-		return result;
-	}
-
 	public static function trimLeadingWhiteSpace(txt:String):String
 	{
-		var white = ["\r", "\n", ' ', "\t"];
+		var white = ["\r", "\n", " ", "\t"];
 		var len = uLength(txt);
 		for (w in white)
 		{
@@ -204,7 +197,7 @@ class Util
 
 	public static function trimTrailingWhiteSpace(txt:String):String
 	{
-		var white = ["\r", "\n", ' ', "\t"];
+		var white = ["\r", "\n", " ", "\t"];
 		var len = uLength(txt);
 		for (w in white)
 		{
@@ -226,13 +219,13 @@ class Util
 		{
 			if (uIndexOf(txt, "<?xml") == 0)
 			{
-				var i = uIndexOf(txt, '>');
+				var i = uIndexOf(txt, ">");
 				txt = uSubstr(txt, i + 1, uLength(txt) - (i + 1));
 				txt = trimLeadingWhiteSpace(txt);
 			}
 			if (uIndexOf(txt, "<data") == 0)
 			{
-				var i = uIndexOf(txt, '>');
+				var i = uIndexOf(txt, ">");
 				txt = uSubstr(txt, i + 1, uLength(txt) - (i + 1));
 				txt = trimLeadingWhiteSpace(txt);
 			}
@@ -242,7 +235,7 @@ class Util
 				{
 					if (uIndexOf(txt, header) == 0)
 					{
-						var i = uIndexOf(txt, '>');
+						var i = uIndexOf(txt, ">");
 						txt = uSubstr(txt, (i + 1), uLength(txt) - (i + 1));
 						txt = trimLeadingWhiteSpace(txt);
 					}
@@ -274,41 +267,41 @@ class Util
 		return txt;
 	}
 
-	public static inline function pathMerge(id:String, theDir:String = ''):String
+	public static inline function pathMerge(id:String, theDir:String = ""):String
 	{
-		return pathSpecial(id, PolymodConfig.mergeFolder, theDir);
+		return pathSpecial(id, "_merge", theDir);
 	}
 
-	private static inline function pathAppend(id:String, theDir:String = ''):String
+	private static inline function pathAppend(id:String, theDir:String = ""):String
 	{
-		return pathSpecial(id, PolymodConfig.appendFolder, theDir);
+		return pathSpecial(id, "_append", theDir);
 	}
 
 	public static inline function stripAssetsPrefix(id:String):String
 	{
-		if (uIndexOf(id, 'assets/') == 0)
+		if (uIndexOf(id, "assets/") == 0)
 		{
 			id = uSubstring(id, 7);
 		}
 		return id;
 	}
 
-	public static function pathSpecial(id:String, special:String = '', theDir:String = ''):String
+	public static function pathSpecial(id:String, special:String = "", theDir:String = ""):String
 	{
-		#if (sys || nodefs)
+		#if sys
 		id = stripAssetsPrefix(id);
 		var thePath = uCombine([theDir, sl(), special, sl(), id]);
 		return thePath;
 		#else
-		return '';
+		return "";
 		#end
 	}
 
 	public static function pathJoin(a:String, b:String):String
 	{
-		var aSlash = (uLastIndexOf(a, '/') == uLength(a) - 1 || uLastIndexOf(a, '\\') == uLength(a) - 1);
-		var bSlash = (uIndexOf(b, '/') == 0 || uIndexOf(b, '\\') == 0);
-		var str = '';
+		var aSlash = (uLastIndexOf(a, "/") == uLength(a) - 1 || uLastIndexOf(a, "\\") == uLength(a) - 1);
+		var bSlash = (uIndexOf(b, "/") == 0 || uIndexOf(b, "\\") == 0);
+		var str = "";
 		if (aSlash || bSlash)
 		{
 			str = Util.uCombine([a, b]);
@@ -323,14 +316,14 @@ class Util
 
 	public static function cleanSlashes(str:String):String
 	{
-		str = uSplitReplace(str, '\\', '/');
-		str = uSplitReplace(str, '//', '/');
+		str = uSplitReplace(str, "\\", "/");
+		str = uSplitReplace(str, "//", "/");
 		return str;
 	}
 
 	public static function sl():String
 	{
-		return '/';
+		return "/";
 	}
 
 	@:access(haxe.xml.Xml)
@@ -427,7 +420,7 @@ class Util
 
 	public static function uExtension(str:String, lowerCase:Bool = false):String
 	{
-		var i = uLastIndexOf(str, '.');
+		var i = uLastIndexOf(str, ".");
 		var extension = uSubstr(str, i + 1, uLength(str) - (i + 1));
 		if (lowerCase)
 		{
@@ -466,13 +459,13 @@ class Util
 	public static function uPathPop(str:String):String
 	{
 		#if unifill
-		var path = Unifill.uSplit(str, '/');
+		var path = Unifill.uSplit(str, "/");
 		path.pop();
-		return path.join('/');
+		return path.join("/");
 		#else
-		var path = str.split('/');
+		var path = str.split("/");
 		path.pop();
-		return path.join('/');
+		return path.join("/");
 		#end
 	}
 
@@ -491,8 +484,8 @@ class Util
 	public static function uTrimFinalEndlines(str:String):String
 	{
 		var done = false;
-		var fix = '';
-		var last = '';
+		var fix = "";
+		var last = "";
 		while (!done)
 		{
 			var fix = Util.uTrimFinalCharIf(str, "\n");
@@ -524,8 +517,8 @@ class Util
 	public static function uTrimFirstEndlines(str:String):String
 	{
 		var done = false;
-		var fix = '';
-		var last = '';
+		var fix = "";
+		var last = "";
 		while (!done)
 		{
 			var fix = Util.uTrimFirstCharIf(str, "\n");
@@ -591,20 +584,5 @@ class Util
 		#else
 		return str.substring(startIndex, endIndex);
 		#end
-	}
-
-	@:generic
-	public static function filterUnique<T>(input:Array<T>)
-	{
-		var output = [];
-		for (item in input)
-		{
-			if (output.indexOf(item) == -1)
-			{
-				// Item not yet in output array
-				output.push(item);
-			}
-		}
-		return output;
 	}
 }

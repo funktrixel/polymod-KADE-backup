@@ -1,10 +1,11 @@
 {
-  "name": "polymod",
-  "url" : "https://github.com/larsiusprime/polymod",
-  "license": "MIT",
-  "tags": ["mod","game","data","asset"],
-  "description": "An atomic modding framework for Haxe games",
-  "version": "1.5.2",
-  "releasenote": "Fixed bug accessing enums in scripted classes",
-  "contributors": ["MasterEric", "larsiusprime"]
+ "name": "polymod",
+ "url" : "https://github.com/larsiusprime/polymod",
+ "license": "MIT",
+ "tags": ["mod","game","data","asset"],
+ "description": "An atomic modding framework for Haxe games",
+ "version": "0.0.0",
+ "releasenote": "",
+ "contributors": ["larsiusprime"],
+ "dependencies": {}
 }

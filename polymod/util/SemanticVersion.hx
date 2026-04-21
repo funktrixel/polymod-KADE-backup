@@ -1,9 +1,32 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.util;
 
 class SemanticVersion
 {
 	/**
-	 * Expects a string of the format '1.2.3', "1.2.3-blah", "1.2.3-alpha.1.blah.2", etc
+	 * Expects a string of the format "1.2.3", "1.2.3-blah", "1.2.3-alpha.1.blah.2", etc
 	 * @param str 
 	 * @return SemanticVersion
 	 */
@@ -11,57 +34,57 @@ class SemanticVersion
 	{
 		var v = new SemanticVersion();
 		v.original = str;
-		if (str == '' || str == null)
+		if (str == "" || str == null)
 			throw "SemanticVersion.hx: string is empty!";
-		var extra = '';
-		if (str.indexOf('+') != -1)
+		var extra = "";
+		if (str.indexOf("+") != -1)
 		{
-			var arr = str.split('+');
+			var arr = str.split("+");
 			str = arr[0];
 		}
-		if (str.indexOf('-') != -1)
+		if (str.indexOf("-") != -1)
 		{
-			var arr = str.split('-');
+			var arr = str.split("-");
 			str = arr[0];
 			extra = arr[1];
 		}
-		var arr = str.split('.');
-		if (arr.length < SemanticVersionScore.MATCH_PATCH)
-			throw 'SemanticVersion.hx: needs major, minor, and patch versions! "$str"';
+		var arr = str.split(".");
+		if (arr.length < 3)
+			throw "SemanticVersion.hx: needs major, minor, and patch versions! :\"" + str + "\"";
 		for (ii in 0...arr.length)
 		{
 			var substr = arr[ii];
-			if (substr.length > 1 && substr.charAt(0) == '0')
+			if (substr.length > 1 && substr.charAt(0) == "0")
 			{
-				throw 'SemanticVersion.hx: no leading zeroes allowed! "$str"';
+				throw "SemanticVersion.hx: no leading zeroes allowed! :\"" + str + "\"";
 			}
 			for (i in 0...substr.length)
 			{
 				var char:String = substr.charAt(i);
 				switch (char)
 				{
-					case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*':
+					case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*":
 					// donothing, fine
 					default:
 						var word = switch (ii)
 						{
-							case 0: 'major';
-							case 1: 'minor';
-							case 2: 'patch';
-							default: '';
+							case 0: "major";
+							case 1: "minor";
+							case 2: "patch";
+							default: "";
 						}
-						throw 'SemanticVersion.hx: couldn\'t parse $word version "$str"';
+						throw "SemanticVersion.hx: couldn't parse " + word + " version! :\"" + str + "\"";
 				}
 			}
 		}
 		var maj:Null<Int> = null;
 		var min:Null<Int> = null;
 		var pat:Null<Int> = null;
-		if (arr[0] == '*')
+		if (arr[0] == "*")
 			maj = -1;
-		if (arr[1] == '*')
+		if (arr[1] == "*")
 			min = -1;
-		if (arr[2] == '*')
+		if (arr[2] == "*")
 			pat = -1;
 		if (maj == null)
 			maj = Std.parseInt(arr[0]);
@@ -70,11 +93,11 @@ class SemanticVersion
 		if (pat == null)
 			pat = Std.parseInt(arr[2]);
 		if (maj == null)
-			throw 'SemanticVersion.hx: couldn\'t parse major version! "$str"';
+			throw "SemanticVersion.hx: couldn't parse major version! :\"" + str + "\"";
 		if (min == null)
-			throw 'SemanticVersion.hx: couldn\'t parse minor version! "$str"';
+			throw "SemanticVersion.hx: couldn't parse minor version! :\"" + str + "\"";
 		if (pat == null)
-			throw 'SemanticVersion.hx: couldn\'t parse patch version! "$str"';
+			throw "SemanticVersion.hx: couldn't parse patch version! :\"" + str + "\"";
 
 		if (maj == -1)
 		{
@@ -93,21 +116,21 @@ class SemanticVersion
 
 		if (maj == -1 || min == -1 || pat == -1)
 		{
-			extra = '';
+			extra = "";
 		}
 
-		if (extra != null && extra != '')
+		if (extra != null && extra != "")
 		{
 			if (maj > 1)
-				throw 'SemanticVersion.hx: pre-release version not allowed post 1.0.0! "$str"';
+				throw "SemanticVersion.hx: pre-release version not allowed post 1.0.0! :\"" + str + "\"";
 			if (maj == 1)
 			{
 				if (min > 0)
-					throw 'SemanticVersion.hx: pre-release version not allowed post 1.0.0! "$str"';
+					throw "SemanticVersion.hx: pre-release version not allowed post 1.0.0! :\"" + str + "\"";
 				if (pat > 0)
-					throw 'SemanticVersion.hx: pre-release version not allowed post 1.0.0! "$str"';
+					throw "SemanticVersion.hx: pre-release version not allowed post 1.0.0! :\"" + str + "\"";
 			}
-			var arr = extra.split('.');
+			var arr = extra.split(".");
 			if (arr != null && arr.length > 0)
 			{
 				for (substr in arr)
@@ -115,19 +138,19 @@ class SemanticVersion
 					var i = Std.parseInt(substr);
 					if (i != null)
 					{
-						if (substr.length > 0 && substr.charAt(0) == '0')
+						if (substr.length > 0 && substr.charAt(0) == "0")
 						{
-							throw 'SemanticVersion.hx: no leading zeroes allowed! "$str"';
+							throw "SemanticVersion.hx: no leading zeroes allowed! :\"" + str + "\"";
 						}
 					}
 					v.preRelease.push(substr);
 				}
 			}
 		}
-		v.effective = '${v.major}.${v.minor}.${v.patch}';
+		v.effective = v.major + "." + v.minor + "." + v.patch;
 		if (v.preRelease != null && v.preRelease.length > 0)
 		{
-			v.effective += '-${v.preRelease.join(".")}';
+			v.effective = (v.effective + "-" + v.preRelease.join("."));
 		}
 		return v;
 	}
@@ -148,19 +171,18 @@ class SemanticVersion
 	 * @param newer version to check against
 	 * @return Int 3:match major/minor/patch, 2:match major/minor, 1:match major, 0:incompatible
 	 */
-	public function checkCompatibility(newer:SemanticVersion):SemanticVersionScore
+	public function checkCompatibility(newer:SemanticVersion):Int
 	{
-		var score:SemanticVersionScore = NONE;
-
+		var score = 0;
 		if (newer.major == major || newer.major == -1 || major == -1)
 		{
-			score = MATCH_MAJOR;
+			score++;
 			if (newer.minor >= minor || newer.minor == -1 || minor == -1)
 			{
-				score = MATCH_MINOR;
+				score++;
 				if (newer.patch >= patch || newer.patch == -1 || patch == -1)
 				{
-					score = MATCH_PATCH;
+					score++;
 				}
 			}
 		}
@@ -193,11 +215,11 @@ class SemanticVersion
 			bits = otherBits;
 		for (i in 0...bits)
 		{
-			var bit = (preRelease != null && preRelease.length > i) ? preRelease[i] : '';
-			var otherBit = (other.preRelease != null && other.preRelease.length > i) ? other.preRelease[i] : '';
-			if (bit == '' && otherBit != '')
+			var bit = (preRelease != null && preRelease.length > i) ? preRelease[i] : "";
+			var otherBit = (other.preRelease != null && other.preRelease.length > i) ? other.preRelease[i] : "";
+			if (bit == "" && otherBit != "")
 				return -1;
-			if (bit != '' && otherBit == '')
+			if (bit != "" && otherBit == "")
 				return 1;
 			var i = Std.parseInt(bit);
 			var j = Std.parseInt(otherBit);
@@ -233,41 +255,4 @@ class SemanticVersion
 	{
 		return effective;
 	}
-}
-
-enum abstract SemanticVersionScore(Int) from Int to Int
-{
-	var NONE = 0;
-	var MATCH_MAJOR = 1;
-	var MATCH_MINOR = 2;
-	var MATCH_PATCH = 3;
-
-	public static function fromString(value:String):SemanticVersionScore
-	{
-		switch (value)
-		{
-			case 'NONE':
-				return NONE;
-			case 'MATCH_MAJOR':
-				return MATCH_MAJOR;
-			case 'MATCH_MINOR':
-				return MATCH_MINOR;
-			case 'MATCH_PATCH':
-				return MATCH_PATCH;
-			default:
-				throw 'SemanticVersionScore: Unknown value $value';
-		}
-	}
-
-	@:op(A < B) static function lt(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
-
-	@:op(A <= B) static function lte(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
-
-	@:op(A > B) static function gt(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
-
-	@:op(A >= B) static function gte(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
-
-	@:op(A == B) static function eq(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
-
-	@:op(A != B) static function ne(a:SemanticVersionScore, b:SemanticVersionScore):Bool;
 }

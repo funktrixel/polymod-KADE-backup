@@ -1,12 +1,39 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package demo;
 
 import openfl.Lib;
 import openfl.display.Sprite;
 import polymod.Polymod;
-import polymod.PolymodConfig;
+import polymod.hscript.HScriptConfig;
 import openfl.events.KeyboardEvent;
 import openfl.text.TextField;
 
+/**
+ * ...
+ * @author 
+ */
 class Main extends Sprite
 {
 	private var sim:Simulation = null;
@@ -15,6 +42,7 @@ class Main extends Sprite
 
 	public function new()
 	{
+		HScriptConfig.rootPath = "data/scripts/";
 		super();
 		mods = [];
 		loadDemo();
@@ -36,14 +64,14 @@ class Main extends Sprite
 		text2.width = 300;
 		addChild(text2);
 		text2.y = text.y - text.height;
-		var str = '';
+		var str = "";
 		for (mod in activeMods)
 		{
-			if (str != '')
-				str += ',';
+			if (str != "")
+				str += ",";
 			str += mod.title;
 		}
-		text2.text = 'Current mods: $str';
+		text2.text = "Current mods: " + str;
 	}
 
 	private function onKeyDown(e:KeyboardEvent)
@@ -51,16 +79,16 @@ class Main extends Sprite
 		var char = String.fromCharCode(e.keyCode);
 		switch (char)
 		{
-			case 'R':
+			case "R":
 				reset();
-			case '1':
-				toggleMod('mod1');
-			case '2':
-				toggleMod('mod2');
-			case '3':
-				toggleMod('mod3');
-			case '4':
-				toggleMod('mod4');
+			case "1":
+				toggleMod("mod1");
+			case "2":
+				toggleMod("mod2");
+			case "3":
+				toggleMod("mod3");
+			case "4":
+				toggleMod("mod4");
 			default: // donothing
 		}
 	}
@@ -98,9 +126,9 @@ class Main extends Sprite
 
 	private function loadMods()
 	{
-		var modRoot = '../../../mods/';
+		var modRoot = "../../../mods/";
 		#if mac
-		modRoot = '../../../../../../mods/';
+		modRoot = "../../../../../../mods/";
 		#end
 		activeMods = Polymod.init({
 			modRoot: modRoot,
@@ -113,6 +141,6 @@ class Main extends Sprite
 
 	private function onError(error:PolymodError)
 	{
-		trace('[${error.severity}] (${error.code.toUpperCase()}): ${error.message}');
+		trace(error.severity + "(" + error.code.toUpperCase() + "):" + error.message);
 	}
 }

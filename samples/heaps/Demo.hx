@@ -21,32 +21,26 @@
  * 
  */
 
-package;
+package samples.heaps;
 
-import nme.Assets;
-import nme.display.DisplayObject;
-import nme.text.TextFieldType;
-import nme.display.Bitmap;
-import nme.display.Sprite;
-import nme.text.TextField;
-import nme.text.TextFormatAlign;
-import nme.AssetType;
-import sys.FileSystem;
+import hxd.Res;
+import h2d.Sprite;
+import h2d.Tile;
+import h2d.Bitmap;
+import h2d.Text;
+import h2d.Text.Align;
+import h2d.Scene;
 
-/**
- * ...
- * @author 
- */
 class Demo extends Sprite
 {
 	private var widgets:Array<ModWidget> = [];
 	private var callback:Array<String>->Void;
-	private var stuff:Array<Dynamic> = [];
+	private var sprites:Array<Sprite> = [];
+	private var texts:Array<Text> = [];
 
-	public function new(callback:Array<String>->Void)
+	public function new(scene:Scene, callback:Array<String>->Void)
 	{
-		super();
-
+		super(scene);
 		this.callback = callback;
 
 		makeButtons();
@@ -56,43 +50,41 @@ class Demo extends Sprite
 
 	public function destroy()
 	{
-		for (w in widgets)
-		{
-			w.destroy();
-		}
-		callback = null;
+		remove();
 		removeChildren();
+		sprites = null;
+		texts = null;
+		callback = null;
 	}
 
 	public function refresh()
 	{
-		for (thing in stuff)
+		for (spr in sprites)
 		{
-			removeChild(cast thing);
+			spr.removeChildren();
+			spr.remove();
 		}
-		stuff.splice(0, stuff.length);
+		for (txt in texts)
+		{
+			txt.removeChildren();
+			txt.remove();
+		}
 		drawImages();
 		drawText();
 	}
 
 	private function makeButtons()
 	{
-		var modDir:String = "../../../mods";
-		var mods = FileSystem.readDirectory(modDir);
+		var modDir:String = "mods";
+		var mods = sys.FileSystem.readDirectory(modDir);
 		var xx = 10;
 		var yy = 200;
 		for (mod in mods)
 		{
-			var w = new ModWidget(mod, onWidgetMove);
-			w.x = xx;
-			w.y = yy;
-
+			var w = new ModWidget(this, xx, yy, mod, onWidgetMove);
 			widgets.push(w);
-
-			xx += Std.int(w.width) + 10;
-			addChild(w);
+			xx += (72 + 10);
 		}
-
 		updateWidgets();
 	}
 
@@ -119,18 +111,7 @@ class Demo extends Sprite
 				return;
 			}
 			var other = widgets[newI];
-
-			var oldX = w.x;
-			var oldY = w.y;
-
-			widgets[newI] = w;
-			widgets[temp] = other;
-
-			w.x = other.x;
-			w.y = other.y;
-
-			other.x = oldX;
-			other.y = oldY;
+			other.swap(w);
 		}
 
 		if (callback != null)
@@ -149,17 +130,25 @@ class Demo extends Sprite
 		updateWidgets();
 	}
 
+	private function list(str:String):Array<String>
+	{
+		var loader = Res.loader;
+		var root = loader.fs.getRoot();
+		var path = root.get(str);
+		var files = [];
+		for (asset in path)
+		{
+			files.push(asset.path);
+		};
+		return files;
+	}
+
 	private function drawImages()
 	{
 		var xx = 10;
 		var yy = 10;
 
-		var images = [];
-
-		for (asset in Assets.list(AssetType.IMAGE))
-		{
-			images.push(asset);
-		}
+		var images = list("img");
 		images.sort(function(a:String, b:String):Int
 		{
 			if (a < b)
@@ -168,27 +157,24 @@ class Demo extends Sprite
 				return 1;
 			return 0;
 		});
-
 		for (image in images)
 		{
-			var bData = Assets.getBitmapData(image);
-			var bmp = new Bitmap(bData);
-			bmp.x = xx;
-			bmp.y = yy;
+			var spr = getSprite();
+			var tile = Res.loader.load(image).toTile();
+			var bmp = new Bitmap(tile, spr);
+			bmp.x = 0;
+			bmp.y = 0;
+			spr.x = xx;
+			spr.y = yy;
 
-			var text = getText();
+			var text = getText(Center);
 
-			text.width = bmp.width;
+			text.maxWidth = tile.width;
 			text.text = image;
 			text.x = xx;
-			text.y = bmp.y + bmp.height;
+			text.y = spr.y + tile.height;
 
-			addChild(bmp);
-			addChild(text);
-			stuff.push(bmp);
-			stuff.push(text);
-
-			xx += Std.int(bmp.width + 10);
+			xx += Std.int(tile.width + 10);
 		}
 	}
 
@@ -197,10 +183,8 @@ class Demo extends Sprite
 		var xx = 500;
 		var yy = 10;
 
-		var textIterator = Assets.list(AssetType.TEXT);
-		var texts = [for (t in textIterator) t];
-
-		texts.sort(function(a:String, b:String)
+		var texts = list("data");
+		texts.sort(function(a:String, b:String):Int
 		{
 			if (a < b)
 				return -1;
@@ -208,52 +192,72 @@ class Demo extends Sprite
 				return 1;
 			return 0;
 		});
-
 		for (t in texts)
 		{
 			var isXML:Bool = false;
-			var align = TextFormatAlign.CENTER;
+			var align:Align = Center;
+			var theWidth = 150;
 			if (t.indexOf("xml") != -1 || t.indexOf("json") != -1)
 			{
 				isXML = true;
-				align = TextFormatAlign.LEFT;
+				align = Left;
+				theWidth = 350;
 			}
+
+			var textBox = getBox(theWidth, 152, 1);
+			textBox.x = xx - 1;
+			textBox.y = yy - 1;
 
 			var text = getText(align);
 			text.x = xx;
 			text.y = yy;
-			text.height = 100;
-			text.border = true;
-			text.width = 250;
-			text.wordWrap = true;
-			text.multiline = true;
+			text.maxWidth = theWidth;
 
-			var str = Assets.getText(t);
+			var str = Res.loader.load(t).toText();
+
 			text.text = (str != null ? str : "null");
 
-			var caption = getText();
+			var caption = getText(Center);
 			caption.x = xx;
-			caption.y = text.y + text.height;
+			caption.y = yy + 152 + caption.textHeight;
 			caption.text = t;
-			caption.width = text.width;
+			caption.maxWidth = text.maxWidth;
 
-			addChild(text);
-			addChild(caption);
-			stuff.push(text);
-			stuff.push(caption);
-
-			// xx += Std.int(text.width + 10);
-			yy += Std.int(text.height + 35);
+			yy += Std.int(152 + caption.textHeight + 35);
 		}
 	}
 
-	private function getText(align:TextFormatAlign = CENTER):TextField
+	private function getBox(width:Int, height:Int, border:Int, color1:Int = 0x000000, color2:Int = 0xFFFFFF):Sprite
 	{
-		var text = new TextField();
-		var dtf = text.defaultTextFormat;
-		dtf.align = align;
-		text.setTextFormat(dtf);
-		text.selectable = false;
+		var spr = getSprite();
+		spr.x = 0;
+		spr.y = 0;
+		var col1 = Tile.fromColor(color1, width, height);
+		var bmp = new Bitmap(col1, spr);
+		bmp.x = 0;
+		bmp.y = 0;
+		var col2 = Tile.fromColor(color2, width - 2, height - 2);
+		var bmp2 = new Bitmap(col2, spr);
+		bmp2.x = border;
+		bmp2.y = border;
+		return spr;
+	}
+
+	private function getText(align:Align):Text
+	{
+		var font = Res.customFont.toFont();
+		var text = new Text(font, this);
+		text.textColor = 0x000000;
+		text.scale(1);
+		text.textAlign = align;
+		texts.push(text);
 		return text;
+	}
+
+	private function getSprite():Sprite
+	{
+		var sprite = new Sprite(this);
+		sprites.push(sprite);
+		return sprite;
 	}
 }

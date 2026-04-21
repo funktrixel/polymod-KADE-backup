@@ -1,30 +1,53 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.backends;
 
-import polymod.Polymod.FrameworkParams;
+import haxe.xml.Fast;
+import haxe.xml.Printer;
 import polymod.Polymod;
+import polymod.Polymod.FrameworkParams;
+import polymod.Polymod.PolymodError;
+import polymod.util.Util;
 import polymod.backends.PolymodAssetLibrary;
 import polymod.backends.PolymodAssets.PolymodAssetType;
-import polymod.util.Util;
-
-using StringTools;
-
 #if unifill
 import unifill.Unifill;
 #end
 #if (lime && !nme)
 import lime.app.Future;
-import lime.graphics.Image;
-import lime.net.HTTPRequest;
-import lime.text.Font;
 import lime.utils.Assets;
+import lime.net.HTTPRequest;
+import lime.graphics.Image;
+import lime.text.Font;
 import lime.utils.Bytes;
-#if (lime >= '4.0.0')
-import lime.media.AudioBuffer;
+#if (lime >= "4.0.0")
 import lime.utils.AssetLibrary;
+import lime.media.AudioBuffer;
 import lime.utils.AssetType;
 #else
-import lime.Assets.AssetLibrary;
 import lime.Assets.AssetType;
+import lime.Assets.AssetLibrary;
 import lime.audio.AudioBuffer;
 #end
 #end
@@ -97,23 +120,17 @@ class LimeBackend implements IBackend
 		var hasMoreThanDefault = false;
 		for (key in defaultLibraries.keys())
 		{
-			if (key != 'default')
+			if (key != "default")
 			{
 				hasMoreThanDefault = true;
 				break;
 			}
 		}
 
-		if (params == null)
-		{
-			// Prevent null object reference errors.
-			params = {};
-		}
-
 		if (hasMoreThanDefault && params.assetLibraryPaths == null)
 		{
 			Polymod.error(PolymodErrorCode.LIME_MISSING_ASSET_LIBRARY_INFO,
-				"Your Lime/OpenFL configuration is using custom asset libraries, but you have not provided the frameworkParams.assetLibraryPaths parameter in Polymod.init() that tells Polymod which asset libraries to expect and what their mod sub-directory prefixes should be.",
+				"Your Lime/OpenFL configuration is using custom asset libraries, but you have not provided any frameworkParams in Polymod.init() that tells Polymod which asset libraries to expect and what their mod sub-directory prefixes should be.",
 				PolymodErrorOrigin.INIT);
 			return false;
 		}
@@ -121,22 +138,22 @@ class LimeBackend implements IBackend
 		// Wrap each asset library in `LimeModLibrary`, register it with Lime, and store it here
 		for (key in defaultLibraries.keys())
 		{
-			var pathPrefix = '';
+			var pathPrefix = "";
 			if (hasMoreThanDefault)
 			{
-				if (!params.assetLibraryPaths.exists(key) && key != 'default')
+				if (!params.assetLibraryPaths.exists(key) && key != "default")
 				{
 					Polymod.error(PolymodErrorCode.LIME_MISSING_ASSET_LIBRARY_REFERENCE,
 						"Your Lime/OpenFL configuration is using custom asset libraries, and you provided frameworkParams in Polymod.init(), but we couldn't find a match for this asset library: (" +
-						key + ')',
+						key + ")",
 						PolymodErrorOrigin.INIT);
 					return false;
 				}
 				else
 				{
-					if (key == 'default')
+					if (key == "default")
 					{
-						pathPrefix = '';
+						pathPrefix = "";
 					}
 					else
 					{
@@ -145,7 +162,7 @@ class LimeBackend implements IBackend
 				}
 			}
 			var fallbackLibrary = defaultLibraries.get(key);
-			var modLibrary = getModLibrary(fallbackLibrary, pathPrefix);
+			var modLibrary = new LimeModLibrary(this, fallbackLibrary, pathPrefix);
 			modLibraries.set(key, modLibrary);
 		}
 
@@ -157,15 +174,6 @@ class LimeBackend implements IBackend
 		return true;
 	}
 
-	private function getModLibrary(fallbackLibrary:AssetLibrary, pathPrefix:String):LimeModLibrary
-	{
-		return new LimeModLibrary(this, fallbackLibrary, pathPrefix);
-	}
-
-	/**
-	 * Gets called when the backend is being destroyed.
-	 * This happens when `Polymod.init()` is called again, which means mods are being reloaded.
-	 */
 	public function destroy()
 	{
 		polymodLibrary = null;
@@ -209,9 +217,6 @@ class LimeBackend implements IBackend
 
 	public function list(type:PolymodAssetType = null):Array<String>
 	{
-		if (modLibraries == null)
-			return [];
-
 		var arr = [];
 		for (modLibrary in modLibraries)
 		{
@@ -237,6 +242,15 @@ class LimeBackend implements IBackend
 				Assets.cache.image.remove(key);
 			}
 		}
+	}
+
+	public function stripAssetsPrefix(id:String):String
+	{
+		if (Util.uIndexOf(id, "assets/") == 0)
+		{
+			id = Util.uSubstring(id, 7);
+		}
+		return id;
 	}
 }
 
@@ -283,7 +297,7 @@ class LimeModLibrary extends AssetLibrary
 	var hasFallback:Bool;
 	var type(default, null):Map<String, AssetType>;
 
-	public function new(backend:LimeBackend, fallback:AssetLibrary, ?pathPrefix:String = '')
+	public function new(backend:LimeBackend, fallback:AssetLibrary, ?pathPrefix:String = "")
 	{
 		b = backend;
 		p = b.polymodLibrary;
@@ -303,86 +317,35 @@ class LimeModLibrary extends AssetLibrary
 
 	public override function getAsset(id:String, type:String):Dynamic
 	{
-		if (type == TEXT)
-			return getText(id);
-
 		var symbol = new IdAndLibrary(id, this);
-
-		// Check for a modded asset.
-		if (p.check(symbol.modId, LimeToPoly(cast type)))
+		var e = p.check(symbol.modId, LimeToPoly(cast type));
+		if (type == TEXT)
 		{
-			// Load the modded asset.
-			return super.getAsset(id, type);
+			return getText(id);
 		}
-		else if (hasFallback)
+		if (!e && hasFallback)
 		{
-			// Load the base asset.
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getAsset(localePath, type);
-			else
-				return fallback.getAsset(id, type);
+			return fallback.getAsset(id, type);
 		}
-		// No fallback.
-		return null;
+		return super.getAsset(id, type);
 	}
 
-	/**
-	 * Returns true if the asset of the given id and type exists.
-	 		* Takes into account mods and locales, if available.
-	 */
 	public override function exists(id:String, type:String):Bool
 	{
 		var symbol = new IdAndLibrary(id, this);
-		if (p.check(symbol.modId, LimeToPoly(cast type)))
-		{
-			// Found a modded asset.
-			return true;
-		}
-		else if (hasFallback)
-		{
-			// Check the base asset.
-			return existsDefault(id, type);
-		}
-		// No fallback.
-		return false;
-	}
-
-	/**
-	 * Returns true if the asset of the given id and type exists.
-	 * Takes into account locales, but not mods.
-	 */
-	function existsDefault(id:String, type:String):Bool
-	{
-		#if firetongue
-		if (p.localePrefix != null)
-		{
-			var localePath = Util.pathJoin(p.localePrefix, p.prependAssetsPrefix(id));
-			if (fallback.exists(localePath, type))
-			{
-				return true;
-			}
-		}
-		// Else, FireTongue not enabled.
-		#end
-		return fallback.exists(id, type);
+		var e = p.check(symbol.modId, LimeToPoly(cast type));
+		if (!e && hasFallback)
+			return fallback.exists(id, type);
+		return e;
 	}
 
 	public override function getAudioBuffer(id:String):AudioBuffer
 	{
 		var symbol = new IdAndLibrary(id, this);
 		if (p.check(symbol.modId))
-		{
 			return AudioBuffer.fromBytes(p.fileSystem.getFileBytes(p.file(symbol.modId)));
-		}
 		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getAudioBuffer(localePath);
-			else
-				return fallback.getAudioBuffer(id);
-		}
+			return fallback.getAudioBuffer(id);
 		return null;
 	}
 
@@ -391,17 +354,9 @@ class LimeModLibrary extends AssetLibrary
 		var symbol = new IdAndLibrary(id, this);
 		var file = p.file(symbol.modId);
 		if (p.check(symbol.modId))
-		{
 			return p.fileSystem.getFileBytes(p.file(symbol.modId));
-		}
 		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getBytes(localePath);
-			else
-				return fallback.getBytes(id);
-		}
+			return fallback.getBytes(id);
 		return null;
 	}
 
@@ -409,17 +364,9 @@ class LimeModLibrary extends AssetLibrary
 	{
 		var symbol = new IdAndLibrary(id, this);
 		if (p.check(symbol.modId))
-		{
 			return Font.fromBytes(p.fileSystem.getFileBytes(p.file(symbol.modId)));
-		}
 		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getFont(localePath);
-			else
-				return fallback.getFont(id);
-		}
+			return fallback.getFont(id);
 		return null;
 	}
 
@@ -427,17 +374,16 @@ class LimeModLibrary extends AssetLibrary
 	{
 		var symbol = new IdAndLibrary(id, this);
 		if (p.check(symbol.modId))
-		{
-			return Image.fromBytes(p.fileSystem.getFileBytes(p.file(symbol.modId)));
-		}
-		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getImage(localePath);
-			else
+			if (p.check(symbol.modId))
+			{
+				if (id.indexOf("newgrounds") != -1)
+				{
+					var bytes = p.fileSystem.getFileBytes(p.file(symbol.modId));
+				}
+				return Image.fromBytes(p.fileSystem.getFileBytes(p.file(symbol.modId)));
+			}
+			else if (hasFallback)
 				return fallback.getImage(id);
-		}
 		return null;
 	}
 
@@ -445,17 +391,9 @@ class LimeModLibrary extends AssetLibrary
 	{
 		var symbol = new IdAndLibrary(id, this);
 		if (p.check(symbol.modId))
-		{
 			return p.file(symbol.modId);
-		}
 		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.getPath(localePath);
-			else
-				return fallback.getPath(id);
-		}
+			return fallback.getPath(id);
 		return null;
 	}
 
@@ -465,21 +403,16 @@ class LimeModLibrary extends AssetLibrary
 		var modText = null;
 		if (p.check(symbol.modId))
 		{
-			// Don't worry, getText falls back to calling getBytes.
 			modText = super.getText(symbol.modId);
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				modText = fallback.getText(localePath);
-			else
-				modText = fallback.getText(id);
+			modText = fallback.getText(id);
 		}
 
 		if (modText != null)
 		{
-			// TODO: Ensure _merge and _append work with alternate asset libraries.
+			// TODO: this is going to be a pain for games with asset libraries
 			modText = p.mergeAndAppendText(id, modText);
 		}
 
@@ -489,24 +422,22 @@ class LimeModLibrary extends AssetLibrary
 	public override function loadBytes(id:String):Future<Bytes>
 	{
 		var symbol = new IdAndLibrary(id, this);
+		// TODO: filesystem
 		if (p.check(symbol.modId))
 		{
 			return Bytes.loadFromFile(p.file(symbol.modId));
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.loadBytes(localePath);
-			else
-				return fallback.loadBytes(id);
+			return fallback.loadBytes(id);
 		}
-		return Bytes.loadFromFile('');
+		return Bytes.loadFromFile("");
 	}
 
 	public override function loadFont(id:String):Future<Font>
 	{
 		var symbol = new IdAndLibrary(id, this);
+		// TODO: filesystem
 		if (p.check(symbol.modId))
 		{
 			#if (js && html5)
@@ -517,43 +448,37 @@ class LimeModLibrary extends AssetLibrary
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.loadFont(localePath);
-			else
-				return fallback.loadFont(id);
+			return fallback.loadFont(id);
 		}
 		#if (js && html5)
-		return Font.loadFromName(paths.get(''));
+		return Font.loadFromName(paths.get(""));
 		#else
-		return Font.loadFromFile(paths.get(''));
+		return Font.loadFromFile(paths.get(""));
 		#end
 	}
 
 	public override function loadImage(id:String):Future<Image>
 	{
-		Polymod.debug('LimeModLibrary.loadImage($id)');
 		var symbol = new IdAndLibrary(id, this);
+		// TODO: filesystem
 		if (p.check(symbol.modId))
 		{
 			return Image.loadFromFile(p.file(symbol.modId));
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.loadImage(localePath);
-			else
-				return fallback.loadImage(id);
+			return fallback.loadImage(id);
 		}
-		return Image.loadFromFile('');
+		return Image.loadFromFile("");
 	}
 
 	public override function loadAudioBuffer(id:String)
 	{
 		var symbol = new IdAndLibrary(id, this);
+		// TODO: filesystem
 		if (p.check(symbol.modId))
 		{
+			// return
 			if (pathGroups.exists(p.file(symbol.modId)))
 			{
 				return AudioBuffer.loadFromFiles(pathGroups.get(p.file(symbol.modId)));
@@ -565,18 +490,15 @@ class LimeModLibrary extends AssetLibrary
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.loadAudioBuffer(localePath);
-			else
-				return fallback.loadAudioBuffer(id);
+			return fallback.loadAudioBuffer(id);
 		}
-		return AudioBuffer.loadFromFile('');
+		return AudioBuffer.loadFromFile("");
 	}
 
 	public override function loadText(id:String):Future<String>
 	{
 		var symbol = new IdAndLibrary(id, this);
+		// TODO: FileSystem
 		if (p.check(symbol.modId))
 		{
 			var request = new HTTPRequest<String>();
@@ -584,129 +506,63 @@ class LimeModLibrary extends AssetLibrary
 		}
 		else if (hasFallback)
 		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.loadText(localePath);
-			else
-				return fallback.loadText(id);
+			return fallback.loadText(id);
 		}
 		var request = new HTTPRequest<String>();
-		return request.load('');
+		return request.load("");
 	}
 
 	public override function isLocal(id:String, type:String):Bool
 	{
 		var symbol = new IdAndLibrary(id, this);
 		if (p.check(symbol.modId))
-		{
 			return true;
-		}
 		else if (hasFallback)
-		{
-			var localePath = p.fileLocale(id);
-			if (fallback.exists(localePath, null))
-				return fallback.isLocal(localePath, type);
-			else
-				return fallback.isLocal(id, type);
-		}
+			return fallback.isLocal(id, type);
 		return false;
 	}
 
 	public override function list(type:String):Array<String>
 	{
-		var fallbackList = hasFallback ? fallback.list(type) : [];
+		var otherList = hasFallback ? fallback.list(type) : [];
 
 		var requestedType = type != null ? cast(type, AssetType) : null;
 		var items = [];
 
 		for (id in p.type.keys())
 		{
-			if (id.startsWith(PolymodConfig.appendFolder) || id.startsWith(PolymodConfig.mergeFolder))
+			if (id.indexOf("_append") == 0 || id.indexOf("_merge") == 0)
 				continue;
-
-			#if firetongue
-			if (id.startsWith(p.localeAssetPrefix))
-			{
-				var assetId = Util.stripPathPrefix(id, p.localeAssetPrefix);
-				if (id.startsWith(p.assetPrefix))
-					assetId = p.prependAssetsPrefix(assetId);
-				items.push(assetId);
-			}
-			else
-			#end
 			if (requestedType == null || exists(id, requestedType))
 			{
-				items.push(p.prependAssetsPrefix(id));
+				items.push(id);
 			}
 		}
 
-		// Properly handle FireTongue assets.
-		// We want to:
-		// - Exclude any assets not in the current locale.
-		// - Include any assets in the current locale's asset folder as though they were in the root asset folder.
-		// - Include other assets (such as FireTongue data files) as though they were in the locale folder.
-		for (fallbackId in fallbackList)
+		for (otherId in otherList)
 		{
-			#if firetongue
-			if (fallbackId.startsWith(p.rawTongueDirectory))
+			if (items.indexOf(otherId) == -1)
 			{
-				// Localized file (example: assets/locales/en-US/...)
-				if (fallbackId.startsWith(p.localeAssetPrefix))
+				if (requestedType == null || fallback.exists(otherId, type))
 				{
-					// Localized asset file in CURRENT locale! (example: assets/locales/en-US/assets/...)
-					if (requestedType == null || fallback.exists(fallbackId, type))
-					{
-						// The asset in the current locale should 'silently' override the default.
-						// We should register this with the locale path prefix removed.
-						var assetId = Util.stripPathPrefix(fallbackId, p.localeAssetPrefix);
-						if (fallbackId.startsWith(p.assetPrefix))
-							assetId = p.prependAssetsPrefix(assetId);
-						items.push(assetId);
-					}
-				}
-				else
-				{
-					// Localized FireTongue data file, or asset file in other locale! (example: assets/locales/en-US/data.tsv)
-					var assetId = fallbackId;
-					if (requestedType == null || fallback.exists(assetId, type))
-					{
-						// The asset in other locales should be added to the list normally.
-						items.push(assetId);
-					}
+					items.push(otherId);
 				}
 			}
-			else
-			{
-				// Unlocalized asset. Handle the original path.
-				var assetId = fallbackId;
-				if (requestedType == null || fallback.exists(assetId, type))
-				{
-					items.push(assetId);
-				}
-			}
-			#else
-			// Unlocalized asset. Handle the original path.
-			var assetId = fallbackId;
-			if (requestedType == null || fallback.exists(assetId, type))
-			{
-				items.push(assetId);
-			}
-			#end
 		}
 
-		return Util.filterUnique(items);
+		return items;
 	}
 }
 
 /**
  * This helper class helps me deal with all the path nonsense of custom asset library asset calls
- * e.g. asking library 'foo' for 'bar.png' will result in:
- *   id = 'foo:bar.png'
- *   lib = 'foo'
- *   library = the 'foo' library
- *   nakedId = 'bar.png'
- *   modId = 'foo/bar.png' (assuming 'foo' is the mod path prefix for the 'foo' library)
- *   fallbackId = 'foo:bar.png' 
+ * e.g. asking library "foo" for "bar.png" will result in:
+ *   id = "foo:bar.png"
+ *   lib = "foo"
+ *   library = the "foo" library
+ *   nakedId = "bar.png"
+ *   modId = "foo/bar.png" (assuming "foo" is the mod path prefix for the "foo" library)
+ *   fallbackId = "foo:bar.png" 
  */
 private class IdAndLibrary
 {
@@ -719,7 +575,7 @@ private class IdAndLibrary
 	public inline function new(id:String, ?libs:Map<String, LimeModLibrary>, ?l:LimeModLibrary)
 	{
 		fallbackId = id;
-		var colonIndex = id.indexOf(':');
+		var colonIndex = id.indexOf(":");
 		lib = id.substring(0, colonIndex);
 		nakedId = id.substring(colonIndex + 1);
 		if (l != null)
@@ -728,18 +584,23 @@ private class IdAndLibrary
 		}
 		else if (libs != null)
 		{
-			if (lib == '' || lib == null)
+			if (lib == "" || lib == null)
 			{
-				lib = 'default';
+				lib = "default";
 			}
 			library = libs.get(lib);
 		}
-		if (library != null && library.pathPrefix != null && library.pathPrefix != '')
+		if (library != null && library.pathPrefix != null && library.pathPrefix != "")
 		{
-			modId = '${library.pathPrefix}/$nakedId';
+			modId = library.pathPrefix + "/" + nakedId;
 		}
 		modId = nakedId;
 	}
+
+	// public inline function isLocal(?type)
+	//     return library.isLocal(id, type)
+	// public inline function exists(?type)
+	//     return library.exists(id, type)
 }
 #end
 

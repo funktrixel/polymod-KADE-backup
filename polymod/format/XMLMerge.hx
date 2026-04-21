@@ -1,7 +1,36 @@
+/**
+ * Copyright (c) 2018 Level Up Labs, LLC
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+
 package polymod.format;
 
+import haxe.xml.Fast;
+import haxe.xml.Printer;
 import polymod.util.Util;
 
+/**
+ * ...
+ * @author 
+ */
 class XMLMerge
 {
 	public static function mergeXMLWork(a:Xml, b:Xml, children:Bool = true, attributes:Bool = true)
@@ -23,7 +52,7 @@ class XMLMerge
 			return;
 		}
 
-		if (a.nodeName == 'merge' || b.nodeName == 'merge')
+		if (a.nodeName == "merge" || b.nodeName == "merge")
 			return;
 
 		if (children)
@@ -32,7 +61,7 @@ class XMLMerge
 			{
 				if (el == null)
 					continue;
-				if (el.nodeName == 'merge')
+				if (el.nodeName == "merge")
 					continue;
 
 				var aCount = countNodes(a, el.nodeName);
@@ -73,8 +102,8 @@ class XMLMerge
 
 	public static function mergeXML(a:Xml, b:Xml, allSigs:Array<String>, mergeMap:Map<String, Array<String>>):Void
 	{
-		var aName = a.nodeType == Xml.XmlType.Document ? '' : a.nodeName;
-		var bName = b.nodeType == Xml.XmlType.Document ? '' : b.nodeName;
+		var aName = a.nodeType == Xml.XmlType.Document ? "" : a.nodeName;
+		var bName = b.nodeType == Xml.XmlType.Document ? "" : b.nodeName;
 
 		if (aName != bName)
 			return;
@@ -95,7 +124,7 @@ class XMLMerge
 					var keyValues = mergeMap.get(sig);
 					if (keyValues == null)
 					{
-						if (sig == '' && aSig == '')
+						if (sig == "" && aSig == "")
 						{
 							if (a.nodeType == Xml.XmlType.Document && b.nodeType == Xml.XmlType.Document)
 							{
@@ -144,7 +173,7 @@ class XMLMerge
 		if (b == null)
 			return;
 
-		var allSigs = [''];
+		var allSigs = [""];
 		var bMap:Map<String, Array<String>> = getNodeMergeMap(b, allSigs);
 
 		mergeXML(a, b, allSigs, bMap);
@@ -159,7 +188,7 @@ class XMLMerge
 
 		for (el in xml.elements())
 		{
-			if (el.nodeName == 'merge')
+			if (el.nodeName == "merge")
 				continue;
 			var subMap = getNodeMergeMap(el, addToArray);
 			map = mergeMapsDestructively(map, subMap);
@@ -174,7 +203,7 @@ class XMLMerge
 				}
 				var arr = map.get(sig);
 
-				var mergeKey = f.node.merge.has.key ? f.node.merge.att.key : '';
+				var mergeKey = f.node.merge.has.key ? f.node.merge.att.key : "";
 				var mergeKeyValue = f.node.merge.x.get(mergeKey);
 
 				arr.push(mergeKey);
@@ -206,14 +235,14 @@ class XMLMerge
 				parent = null;
 			}
 		}
-		var str = '';
+		var str = "";
 		for (i in 0...arr.length)
 		{
 			var j = arr.length - 1 - i;
 			str += arr[j];
 			if (i != arr.length - 1)
 			{
-				str += '.';
+				str += ".";
 			}
 		}
 		return str;
