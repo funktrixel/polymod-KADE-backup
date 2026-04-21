@@ -1,18 +1,15 @@
 package polymod.backends;
 
+import polymod.hscript.PolymodScriptClass;
 import haxe.io.Bytes;
-import openfl.display3D.IndexBuffer3D;
 import polymod.backends.IBackend;
 import polymod.backends.PolymodAssets.PolymodAssetType;
 import polymod.format.ParseRules;
 import polymod.fs.PolymodFileSystem.IFileSystem;
-// import polymod.hscript.PolymodScriptClass;
 import polymod.util.Util;
 #if firetongue
 import firetongue.FireTongue;
 #end
-
-using StringTools;
 
 typedef PolymodAssetLibraryParams =
 {
@@ -64,7 +61,6 @@ class PolymodAssetLibrary
 	public var fileSystem(default, null):IFileSystem;
 
 	public var type(default, null):Map<String, PolymodAssetType>;
-	public var typeLibraries(default, null):Map<String, Array<String>>;
 
 	public var assetPrefix(default, null):String = "assets/";
 	public var dirs:Array<String> = null;
@@ -114,7 +110,7 @@ class PolymodAssetLibrary
 
 	/**
 	 * The directory where the current locale's FireTongue localized assets are stored.
-	 *
+	 * 
 	 * Prefix asset paths with this string to get a localized version of the asset.
 	 */
 	public var localeAssetPrefix(default, null):String = null;
@@ -140,7 +136,8 @@ class PolymodAssetLibrary
 		{
 			backend.destroy();
 		}
-		Polymod.clearScripts();
+		PolymodScriptClass.clearScriptClasses();
+		polymod.hscript.HScriptable.ScriptRunner.clearScripts();
 	}
 
 	public function mergeAndAppendText(id:String, modText:String):String
@@ -196,24 +193,10 @@ class PolymodAssetLibrary
 		return backend.getText(id);
 	}
 
-	#if lime
-	public function loadText(id:String):lime.app.Future<String>
-	{
-		return backend.loadText(id);
-	}
-	#end
-
 	public function getBytes(id:String):Bytes
 	{
 		return backend.getBytes(id);
 	}
-
-	#if lime
-	public function loadBytes(id:String):lime.app.Future<Bytes>
-	{
-		return backend.loadBytes(id);
-	}
-	#end
 
 	public function getPath(id:String):String
 	{
@@ -236,8 +219,6 @@ class PolymodAssetLibrary
 
 		for (id in this.type.keys())
 		{
-			if (items.indexOf(id) != -1)
-				continue;
 			if (id.indexOf('_append') == 0 || id.indexOf('_merge') == 0)
 				continue;
 			if (type == null || type == BYTES || check(id, type))
@@ -305,7 +286,6 @@ class PolymodAssetLibrary
 		var idStripped = stripAssetsPrefix(id);
 		if (theDir != '')
 		{
-			if (idStripped.startsWith(theDir)) return idStripped;
 			return Util.pathJoin(theDir, idStripped);
 		}
 
@@ -326,12 +306,9 @@ class PolymodAssetLibrary
 			// Else, FireTongue not enabled.
 			#end
 
-			if (resultLocalized) continue;
-
+			// If we have a localized result, any unlocalized result will be ignored
 			if (!resultLocalized)
 			{
-				// If we have an asset prefix
-
 				var filePath = Util.pathJoin(modDir, idStripped);
 				if (fileSystem.exists(filePath))
 					result = filePath;
@@ -375,12 +352,9 @@ class PolymodAssetLibrary
 			}
 			// Else, FireTongue not enabled.
 			#end
-
 			var filePath = Util.pathJoin(d, id);
 			if (fileSystem.exists(filePath))
-			{
 				return true;
-			}
 		}
 		// The loop didn't find it.
 		return false;
@@ -388,8 +362,7 @@ class PolymodAssetLibrary
 
 	private function init()
 	{
-		type = [];
-		typeLibraries = [ 'default' => [] ];
+		type = new Map<String, PolymodAssetType>();
 		initExtensions();
 		if (parseRules == null)
 			parseRules = ParseRules.getDefault();
@@ -404,43 +377,33 @@ class PolymodAssetLibrary
 
 	private function initExtensions()
 	{
-		if (extensions == null)
-			extensions = new Map<String, PolymodAssetType>();
-
-		_extensionSet('mp3', AUDIO_SOUND);
-		_extensionSet('ogg', AUDIO_SOUND);
-		_extensionSet('wav', AUDIO_SOUND);
-
-		_extensionSet('otf', FONT);
-		_extensionSet('ttf', FONT);
-
-		_extensionSet('bmp', IMAGE);
-		_extensionSet('gif', IMAGE);
+		extensions = new Map<String, PolymodAssetType>();
+		_extensionSet('mp3', AUDIO_GENERIC);
+		_extensionSet('ogg', AUDIO_GENERIC);
+		_extensionSet('wav', AUDIO_GENERIC);
 		_extensionSet('jpg', IMAGE);
 		_extensionSet('png', IMAGE);
+		_extensionSet('gif', IMAGE);
 		_extensionSet('tga', IMAGE);
+		_extensionSet('bmp', IMAGE);
 		_extensionSet('tif', IMAGE);
 		_extensionSet('tiff', IMAGE);
-
-		_extensionSet('csv', TEXT);
-		_extensionSet('hx', TEXT);
-		_extensionSet('hxc', TEXT);
-		_extensionSet('hxs', TEXT);
-		_extensionSet('json', TEXT);
-		_extensionSet('md', TEXT);
-		_extensionSet('mpf', TEXT);
-		_extensionSet('tmx', TEXT);
-		_extensionSet('tsv', TEXT);
-		_extensionSet('tsx', TEXT);
 		_extensionSet('txt', TEXT);
-		_extensionSet('vdf', TEXT);
 		_extensionSet('xml', TEXT);
-
+		_extensionSet('json', TEXT);
+		_extensionSet('csv', TEXT);
+		_extensionSet('tsv', TEXT);
+		_extensionSet('mpf', TEXT);
+		_extensionSet('tsx', TEXT);
+		_extensionSet('tmx', TEXT);
+		_extensionSet('vdf', TEXT);
+		_extensionSet('ttf', FONT);
+		_extensionSet('otf', FONT);
+		_extensionSet('webm', VIDEO);
+		_extensionSet('mp4', VIDEO);
+		_extensionSet('mov', VIDEO);
 		_extensionSet('avi', VIDEO);
 		_extensionSet('mkv', VIDEO);
-		_extensionSet('mov', VIDEO);
-		_extensionSet('mp4', VIDEO);
-		_extensionSet('webm', VIDEO);
 	}
 
 	private function _extensionSet(str:String, type:PolymodAssetType)
@@ -459,13 +422,20 @@ class PolymodAssetLibrary
 
 		var all:Array<String> = null;
 
-		if (d == '') all = [];
+		if (d == '' || d == null)
+		{
+			all = [];
+		}
 
 		try
 		{
 			if (fileSystem.exists(d))
 			{
 				all = fileSystem.readDirectoryRecursive(d);
+			}
+			else
+			{
+				all = [];
 			}
 		}
 		catch (msg:Dynamic)
@@ -480,72 +450,14 @@ class PolymodAssetLibrary
 			ext = ext.toLowerCase();
 			var assetType = getExtensionType(ext);
 			type.set(f, assetType);
-			// TODO: What about other asset libraries?
-			typeLibraries.get('default').push(f);
-			#if openfl
-			if (assetType == FONT)
-			{
-				var font = openfl.text.Font.fromBytes(fileSystem.getFileBytes(file(f, d)));
-				@:privateAccess if (!openfl.text.Font.__fontByName.exists(font.name))
-					openfl.text.Font.registerFont(font);
-			}
-			#end
 		}
 		Polymod.notice(MOD_LOAD_DONE, 'Done loading mod $d');
-	}
-
-	@:allow(polymod.backends.LimeCoreLibrary)
-	private function initRedirectPath(libraryId:String, redirectPath:String, pathPrefix:String = '') {
-		if (redirectPath == null || redirectPath == '') return;
-
-		redirectPath = Util.pathJoin(redirectPath, pathPrefix);
-
-		var all:Array<String> = [];
-
-		try {
-			if (fileSystem.exists(redirectPath))
-			{
-				all = fileSystem.readDirectoryRecursive(redirectPath);
-			} else {
-				Polymod.error(MOD_LOAD_FAILED, 'Failed to load core asset redirect $redirectPath : Directory does not exist!');
-				throw('ModAssetLibrary.initRedirectPath("$redirectPath") failed: Directory does not exist!');
-			}
-		}
-		catch (msg:Dynamic)
-		{
-			Polymod.error(MOD_LOAD_FAILED, 'Failed to load core asset redirect $redirectPath : $msg');
-			throw('ModAssetLibrary.initRedirectPath("$redirectPath") failed: $msg');
-		}
-
-		if (!typeLibraries.exists(libraryId)) {
-			typeLibraries.set(libraryId, []);
-		}
-
-		for (f in all) {
-			var doti = Util.uLastIndexOf(f, '.');
-			var ext:String = doti != -1 ? f.substring(doti + 1) : '';
-			ext = ext.toLowerCase();
-			var assetType = getExtensionType(ext);
-			type.set(f, assetType);
-			if (!typeLibraries.exists(libraryId)) typeLibraries.set(libraryId, []);
-			typeLibraries.get(libraryId).push(f);
-			#if openfl
-			if (assetType == FONT)
-			{
-				var font = openfl.text.Font.fromBytes(fileSystem.getFileBytes(file(f, redirectPath)));
-				@:privateAccess if (!openfl.text.Font.__fontByName.exists(font.name))
-					openfl.text.Font.registerFont(font);
-			}
-			#end
-		}
-		var keyCount = typeLibraries.get(libraryId).length;
-		Polymod.notice(MOD_LOAD_DONE, 'Done loading core asset redirect $redirectPath ($keyCount keys)');
 	}
 
 	/**
 	 * Strip the `assets/` prefix from a file path, if it is present.
 	 * If your app uses a different asset path prefix, you can override this with the `assetPrefix` parameter.
-	 *
+	 * 
 	 * @param id The path to strip.
 	 * @return The modified path
 	 */
@@ -561,7 +473,7 @@ class PolymodAssetLibrary
 	/**
 	 * Add the `assets/` prefix to a file path, if it isn't present.
 	 * If your app uses a different asset path prefix, you can override this with the `assetPrefix` parameter.
-	 *
+	 * 
 	 * @param id The path to prepend
 	 * @return The modified path
 	 */

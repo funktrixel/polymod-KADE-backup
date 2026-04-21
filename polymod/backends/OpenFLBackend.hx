@@ -10,7 +10,7 @@ class OpenFLBackend extends StubBackend
 	}
 }
 #else
-#if (!nme && !macro)
+#if !nme
 class OpenFLBackend extends LimeBackend
 {
 	public override function clearCache()
@@ -32,8 +32,7 @@ class OpenFLBackend extends LimeBackend
 		// {
 		//   openfl.Assets.cache.removeBitmapData(key);
 		// }
-		var cache:openfl.utils.AssetCache = Std.isOfType(openfl.utils.Assets.cache, openfl.utils.AssetCache) ? cast openfl.utils.Assets.cache : null;
-		if (cache == null) return; // Don't mess with custom asset cache implementations.
+		var cache:openfl.utils.AssetCache = cast openfl.utils.Assets.cache;
 		for (key in cache.bitmapData.keys())
 		{
 			cache.bitmapData.remove(key);
@@ -46,8 +45,7 @@ class OpenFLBackend extends LimeBackend
 		// {
 		//   openfl.Assets.cache.removeFont(key);
 		// }
-		var cache:openfl.utils.AssetCache = Std.isOfType(openfl.utils.Assets.cache, openfl.utils.AssetCache) ? cast openfl.utils.Assets.cache : null;
-		if (cache == null) return; // Don't mess with custom asset cache implementations.
+		var cache:openfl.utils.AssetCache = cast openfl.utils.Assets.cache;
 		for (key in cache.font.keys())
 		{
 			cache.font.remove(key);
@@ -60,8 +58,7 @@ class OpenFLBackend extends LimeBackend
 		// {
 		//   openfl.Assets.cache.removeSound(key);
 		// }
-		var cache:openfl.utils.AssetCache = Std.isOfType(openfl.utils.Assets.cache, openfl.utils.AssetCache) ? cast openfl.utils.Assets.cache : null;
-		if (cache == null) return; // Don't mess with custom asset cache implementations.
+		var cache:openfl.utils.AssetCache = cast openfl.utils.Assets.cache;
 		for (key in cache.sound.keys())
 		{
 			cache.sound.remove(key);

@@ -2,10 +2,8 @@ package polymod.backends;
 
 import polymod.backends.PolymodAssets.PolymodAssetType;
 #if flixel
-#if !macro
 import lime.utils.Assets as LimeAssets;
 import openfl.Assets as OpenFLAssets;
-#end
 import openfl.utils.AssetType;
 #end
 
@@ -19,7 +17,6 @@ class FlixelBackend extends StubBackend
 	}
 }
 #else
-#if !macro
 class FlixelBackend extends OpenFLBackend
 {
 	public function new()
@@ -84,5 +81,4 @@ class FlixelBackend extends OpenFLBackend
 		super.destroy();
 	}
 }
-#end
 #end

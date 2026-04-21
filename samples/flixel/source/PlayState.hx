@@ -44,19 +44,19 @@ class PlayState extends FlxState
 		var modDir:String = '../../../mods';
 		#if mac
 		// account for <APPLICATION>.app/Contents/Resources
-		modDir = '../../../$modDir';
+		modDir = '../../../../../../mods';
 		#end
-
-		var modList = Polymod.scan({
-			modRoot: modDir,
-		});
-
+		#if sys
+		var mods = sys.FileSystem.readDirectory(modDir);
+		#else
+		var mods = [];
+		#end
 		var xx = 10;
-		var yy = 400;
-		for (modMeta in modList)
+		var yy = 200;
+		for (mod in mods)
 		{
-			trace('Adding widget for mod ${modMeta.title}');
-			var w = new ModWidget(modMeta.id, onWidgetMove);
+			trace('Adding widget for mod $mod');
+			var w = new ModWidget(mod, onWidgetMove);
 			w.x = xx;
 			w.y = yy;
 
@@ -175,7 +175,6 @@ class PlayState extends FlxState
 
 			sprite.setGraphicSize(72, 72);
 			sprite.updateHitbox();
-			sprite.antialiasing = true;
 
 			var text = new FlxText(xx, sprite.y + sprite.height, sprite.width, image);
 			text.setFormat("Arial", 12, 0xFF000000, FlxTextAlign.CENTER);
@@ -220,7 +219,7 @@ class PlayState extends FlxState
 			}
 
 			var text = new FlxInputText(xx, yy, 250);
-			text.setFormat("Arial", 12, 0xFF000000, FlxTextAlign.LEFT);
+			text.setFormat("Arial", 12, 0xFF000000, FlxTextAlign.CENTER);
 			text.height = 150;
 			text.wordWrap = true;
 			text.lines = 10;
@@ -258,21 +257,18 @@ class PlayState extends FlxState
 	private function loadMods(dirs:Array<String>)
 	{
 		trace('Loading mods: ${dirs}');
-		
-		var modDir:String = '../../../mods';
+		var modRoot = '../../../mods/';
 		#if mac
 		// account for <APPLICATION>.app/Contents/Resources
-		modDir = '../../../$modDir';
+		var modRoot = '../../../../../../mods';
 		#end
-
 		var results = Polymod.init({
-			modRoot: modDir,
+			modRoot: modRoot,
 			dirs: dirs,
 			errorCallback: onError,
 			ignoredFiles: Polymod.getDefaultIgnoreList(),
 			framework: Framework.FLIXEL
 		});
-
 		// Reload graphics before rendering again.
 		var loadedMods = results.map(function(item:ModMetadata)
 		{
@@ -284,6 +280,6 @@ class PlayState extends FlxState
 
 	private function onError(error:PolymodError)
 	{
-		trace('[${error.severity}] (${Std.string(error.code).toUpperCase()}): ${error.message}');
+		trace('[${error.severity}] (${error.code.toUpperCase()}): ${error.message}');
 	}
 }

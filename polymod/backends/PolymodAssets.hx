@@ -73,6 +73,7 @@ typedef PolymodAssetsParams =
 
 class PolymodAssets
 {
+	/**PUBLIC STATIC**/
 	public static function init(params:PolymodAssetsParams):PolymodAssetLibrary
 	{
 		var framework:polymod.Framework = params.framework;
@@ -85,9 +86,7 @@ class PolymodAssets
 		{
 			Polymod.notice(PolymodErrorCode.FRAMEWORK_INIT, 'Framework: User specified $framework');
 		}
-		var backend:IBackend = null;
-		#if !macro
-		backend = switch (framework)
+		var backend:IBackend = switch (framework)
 		{
 			case CASTLE: new polymod.backends.CastleBackend();
 			case NME: new polymod.backends.NMEBackend();
@@ -97,7 +96,6 @@ class PolymodAssets
 			case LIME: new polymod.backends.LimeBackend();
 			case HEAPS: new polymod.backends.HEAPSBackend();
 			case KHA: new polymod.backends.KhaBackend();
-			case CERAMIC: new polymod.backends.CeramicBackend();
 			case CUSTOM:
 				if (params.customBackend != null)
 				{
@@ -110,7 +108,6 @@ class PolymodAssets
 				}
 			default: null;
 		}
-		#end
 		if (backend == null)
 		{
 			Polymod.error(PolymodErrorCode.FAILED_CREATE_BACKEND, 'Could not create a backend for framework: $framework');
@@ -123,7 +120,6 @@ class PolymodAssets
 			if (framework == polymod.Framework.NME
 				|| framework == polymod.Framework.HEAPS
 				|| framework == polymod.Framework.KHA
-				|| framework == polymod.Framework.CERAMIC
 				|| framework == polymod.Framework.CASTLE)
 			{
 				Polymod.error(PolymodErrorCode.FUNCTIONALITY_NOT_IMPLEMENTED,
@@ -186,6 +182,7 @@ class PolymodAssets
 		return library.list(type);
 	}
 
+	/**PRIVATE STATIC**/
 	private static var library:PolymodAssetLibrary;
 
 	/**
@@ -200,9 +197,6 @@ class PolymodAssets
 		#end
 		#if heaps
 		return HEAPS;
-		#end
-		#if ceramic
-		return CERAMIC;
 		#end
 		#if nme
 		return NME;
@@ -223,7 +217,7 @@ class PolymodAssets
 	}
 }
 
-enum abstract PolymodAssetType(String) from String to String
+@:enum abstract PolymodAssetType(String) from String to String
 {
 	var BYTES = 'BYTES';
 	var TEXT = 'TEXT';

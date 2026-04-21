@@ -3,171 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [1.8.0] - 2024-07-26
-The version is the result of resolving practical needs that arose from using Polymod with [Friday Night Funkin'](https://github.com/FunkinCrew/Funkin) over the past year and a half!
-## Added
-- Added the config option `frameworkParams.coreAssetRedirect` which lets you use another directory as your primary `assets/` folder.
-  - This is useful if you are hot reloading scripts or other data files!
-- Added the `loadScriptsAsync` parameter to `Polymod.init()` to load scripted classes asynchronously.
-- Reworked `_append` and `_merge` functionality for JSON. 
-  - `_append` now adds the keys of the provided JSON to the target JSON.
-  - `_merge` now utilizes a [JSONPatch](https://jsonpatch.com/) file to modify the target JSON with operations.
-    - This implementation of JSONPatch has been modified to allow for [JSONPath](https://goessner.net/articles/JsonPath/) strings in the `path` argument.
-## Changed
-- Replaced several instances of the deprecated `@:enum` syntax (via @MAJigsaw77)
-- Improved image caching on HTML5 builds.
-- Reimplement the `loadBytes` function so that it properly loads the files's contents asynchronously.
-  - Also reimplemented `loadImage` and `loadText` to be properly asynchronous.
-- Made improvements to error handling for script parsing.
-- Greatly improved the speed of Lime's `Assets.list()` function.
-- Added proper handling for calls to `throw` in scripts.
-- Fixed an issue when using HScript 2.5.0.
-- Improve parsing of scripted superclass types.
-- Improve error handling when a function called by a script throws an uncaught exception.
-## Fixed
-- Fix an issue where variables may not resolve properly when assigned to `null`.
-- Fixed an issue where scripts could not access or import enums.
-- Fixed a build issue with the HashLink library.
-- Fixed an issue where Polymod's Lime backend would destroy the underlying library's cached assets.
-- Fixed an issue where invalid `coreAssetRedirect` paths would crash the game.
-- Fixed an issue where `coreAssetRedirect` wouldn't allow accessing files from the default library.
-- Fixed an issue where Polymod would fail to build if HScript wasn't installed (via @MAJigsaw77)
-- Fixed an issue with a null object reference in the script parser (via @AltronMaxX)
-- Fixed an issue with loading custom fonts (via @gamerbross)
-
-## [1.7.0] - 2023-01-16
-This version has been postposed a while, but adds several powerful features. A dependency system, support for zipped mods (on both desktop and HTML5!), reworks to versioning functions, and more.
-## Added
-- Added the `dependencies` key to the ModMetadata format.
-  - Example: `{"modA": "1.0.0", "modB": "3.*", "modC": "1.9.0 - 2.3.0"}`
-    - Add an object of key/value pairs to your `_polymod_meta.json` file, where the key is the mod ID and the value is the version rule.
-    - Version rules can match any of those seen in [node-semver](https://github.com/npm/node-semver).
-  - Mods provided in the dependency list must be loaded in order for this mod to be loaded.
-    - The provided mod list will be reordered to account for dependencies, as needed, and maintaining order otherwise.
-    - Missing dependencies, mismatched dependency versions, or cyclical dependencies will result in an error. See `skipDependencyErrors` for more info.
-- Added the `optionalDependencies` key to the ModMetadata format.
-  - Mods provided in the optional dependencies list will reorder the dependency list, but will not cause dependency errors if absent.
-- Added the `skipDependencyChecks` parameter to `Polymod.init()`.
-  - Defaults to `false`.
-  - Setting this option to `true` will skip checks for the presence of mandatory dependencies, and prevent reordering the mod load list.
-  - Enabling this option is NOT recommended, since it may break mods which rely on their dependencies.
-- Added the new `ZipFileSystem`.
-  - Enable it with `Polymod.init({customFilesystem: polymod.fs.ZipFileSystem})`.
-  - On desktop platforms, ZipFileSystem automatically behaves like SysFileSystem with the additional capability of loading mods from ZIP files (compressed or uncompressed) as though they were folders instead.
-  - On HTML5 builds, ZipFileSystem will instead act like a MemoryFileSystem which can load a mod when provided the byte data of a ZIP file.
-    - After loading mods, you may need to wait a short time before reloading any images. This is because the browser must asynchronously preload the image data before it can be provided to Haxe.
-- Added a convenience functions to handle loading and unloading of mods at runtime.
-  - `loadOnlyMods()` loads a given set of mods, by re-initializing the framework with the appropriate mods enabled.
-    - This is as opposed to `loadMods()`, which appends to the mod list rather than setting it.
-  - Note you may need to call `clearCache()` depending on your framework and your app's current state.
-- Added import aliasing and blacklist system for scripted classes.
-  - Call `Polymod.addImportAlias('full.class.Path', TargetClass)` to replace any instances of that import with the target class.
-  - Call `Polymod.removeImportAlias('full.class.Path')` to remove a previously assigned import alias.
-  - Call `Polymod.blacklistImport('full.class.Path')` to throw an error whenever a scripted class attempts to import the chosen module.
-- `loadMod()`, `unloadMod()`, `loadMods()`, and `unloadMods()` now return an array of ModMetadata for each of the mods that are loaded after the operation.
-- Added the `skipDependencyErrors` parameter to `Polymod.init()`.
-  - Defaults to `false`.
-  - While this option is `true`, any dependency issues will cause a warning to be reported, and Polymod will skip the problematic mods and load the rest.
-  - While this option is `false`, any dependency issues (missing dependencies, mismatched versions, or cyclical dependencies) will cause an error to be reported, and Polymod will initialize with NO mods loaded.
-## Changed
-- `thx.semver` has been added as a mandatory dependency Haxelib, replacing the existing Semantic Version code.
-  - This provides full support for the features of [node-semver](https://github.com/npm/node-semver) when specifying version rules.
-- Updated `openfl` sample to showcase dependency features.
-  - `mod2` now has a mandatory dependency on `mod1`.
-  - Added a button to showcase the difference when `skipDependencyErrors` changes.
-- `Polymod.scan()` has been refactored.
-  - `scan()` now has two modes; the first, used when a parameter object is provided, uses the modRoot and fileSystem given.
-    - This will supercede the modRoot and fileSystem that was used for `Polymod.init()`.
-  - The second mode, used when a parameter object is not provided, utilizes the filesystem created in `Polymod.init()`.
-    - If you want to scan the modlist before loading mods, you can initialize Polymod with an empty modlist before scanning, then use `loadMods()` to reinitialize with additional mods.
-    - If no parameters are provided but `init()` has not been called yet, an error will be thrown.
-- Updated samples to use the `hmm` dependency management tool.
-  - Install `hmm` via Haxelib, then run `hmm install` in a sample project to install project-local copies of all necessary dependencies with the correct version.
-- `IFileSystem.scanMods()` has been refactored.
-  - `scanMods` now takes an optional `apiVersionRule` parameter, and returns `Array<ModMetadata>`.
-  - `scanMods` will now parse and return the mod metadata, rather than returning an array of mod IDs.
-  - `scanMods` will now optionally filter to only mods which match the provided `apiVersionRule` (pass `null` to skip this).
-- Reworked error codes for script-related exceptions and warnings.
-## Removed
-- Several deprecated and obsolete options and variables related to this update's changes have been removed.
-  - Removed the `SemanticVersion` utility class.
-  - Removed the `apiVersionMatch` option from PolymodConfig.
-  - Removed the `POLYMOD_API_VERSION_MATCH` define.
-  - Removed the `modVersion` parameter of `Polymod.init`
-## Fixed
-- Fixed several compilation issues with `hscriptPos` disabled.
-
-
-## [1.6.0] - 2022-07-28
-Not much in the way of new features for end users here, but some refactors resulted in breaking changes so this is labelled as a minor version rather than a bugfix version.
-## Added
-- Scripted classes now allow functions with up to 8 arguments, up from 4.
-- Added the new `ErrorEx` and `PolymodPrinterEx` classes for more detailed and extensible error handling.
-  - Added new error message when attempting to call a custom function on a scripted class improperly.
-  - Added new error message when attempting to retrieve a custom variable on a scripted class improperly.
-  - Added new error message when attempting to assign a custom variable on a scripted class improperly.
-- New static function `Polymod.clearScripts()` clears all scripted classes and scripted functions. Useful for cleaning up before a script reload.
-## Changed
-- HScriptable has been split into two interfaces: HScriptable and HScriptedClass.
-  - HScriptable is now used only for `@:hscript` annotations on scripted functions, and HScriptedClass is used for `@:hscriptClass` annotations to generate scripted classes.
-  - These two interfaces are considered mutually exclusive, and only one should be used on a given class.
-- Moved internal HScript classes to an `_internal` package.
-## Fixed
-- Refactored HScript-related macros for improved maintainability.
-- Cached `Reflect.fields()` queries on PolymodScriptedClass proxies to improve performance.
-- Fixed an issue where attempting to annotate `@:hscriptClass` on a class which utilized variables whose type is a function.
-  - This now allows for FlxUIState to be scripted.
-- Fixed an issue where the right-hand side of a variable assignment was being executed twice.
-- Cleanup extraneous compile-time logging.
-
-
-## [1.5.4] - 2022-07-16
-This patch includes several major bug fixes and convenience improvements.
-## Added
-- Added a new error message which occurs when a script cannot locate a module you try to import.
-  - If you encounter this message, make sure you typed the package name correctly, and make sure the module is exempt from Haxe's [Dead Code Elimination](https://haxe.org/manual/cr-dce.html) process.
-## Fixed
-- Fixed an issue where attempting to annotate `@:hscriptClass` on a class which utilized nested type parameters would fail to compile.
-  - This now allows for FlxState and FlxSubState to be scripted, among other things.
-- Fixed an issue where, if a function in a scripted class calls another function within that class, the local variable scope is destroyed.
-- Fixed a compilation issue which occurs when `hscriptPos` is not enabled (`hscript.Error has no field line`)
-  - Line numbers will now display as `#???` by default. To enable line numbers on script errors (highly recommended), add `<haxedef name="hscriptPos" value="true" />` to your `project.xml` file.
-## Known Issues
-- A build error `hscript.Interp has no field setVar` may occur. If this happens, make sure you are using the latest version of HScript, version 2.5.0.
-
-
-## [1.5.3] - 2022-05-18
-Lots of tiny bug fixes and several new utilities. Overall a better experience if you're debugging a tricky script.
-## Added
-- Added the following utility functions to scripted classes.
-  - `scriptCall(methodName, [...args])`: Calls a given function from a scripted class with the given arguments.
-  - `scriptGet(fieldName)`: Gets the value of a given field from a scripted class.
-  - `scriptSet(fieldName, value)`: Sets the value of a given field in a scripted class.
-  - Note that these functions are only necessary when the field is defined on the scripted class itself. Functions and fields defined on the superclass will be accessible automatically.
-- Added the `Polymod.reload()` function.
-  - This function will reload Polymod, with the same modlist and parameters as the last time you initialized.
-- Added the `iconPath` attribute to the ModMetadata class.
-  - This provides the full path of the mod's icon, if available.
-- Added a stub backend for the Ceramic framework.
-## Changed
-- Drastically improved error logging for scripted classes, with the new `SCRIPT_PARSE_ERROR` and `SCRIPT_EXCEPTION` error codes.
-- Scripted functions now use the scripted class interpreter; this provides improved error logging in some cases.
-## Fixed
-- Improved error handling for certain scripts.
-- Fixed a bug where Polymod would mutate the mod directory list (fixes a bug with `loadMod()` and `unloadMod()`).
-- Improved compatibility with build macros, especially when building for HTML5.
-- Fixed a compatibility issue with older versions of Haxe (syntax error in PolymodFileSystem).
-# Known Issues
-- Passing a function of a scripted class as an argument (for example, when used as a sort function) clears all the variables in the local scope.
-  - As a workaround, define and use an anonymous function instead.
-
-
 ## [1.5.2] - 2022-03-01
 A small bug fix update.
 ### Fixed
 - Fixed a bug where scripted classes would fail while attempting to import and use an enum.
 - Standardized code style across several files.
-
 
 ## [1.5.1] - 2022-02-25
 A large number of bug fixes for scripted classes.
@@ -195,11 +35,9 @@ A large number of bug fixes for scripted classes.
 ### Removed
 - The `POLYMOD_USE_HSCRIPTEX` flag has been made redundant. A fork of `hscript-ex` is now bundled into Polymod.
 
-
 ## [1.4.3] - 2022-02-18
 ### Fixed
 - OpenFLBackend no longer breaks when you are using the main version of OpenFL.
-
 
 ## [1.4.2] - 2022-02-06
 Version 1.4.2 includes a large number of bug fixes and tweaks to improve reliability.
@@ -245,7 +83,6 @@ Version 1.4.2 includes a large number of bug fixes and tweaks to improve reliabi
 - Fixed a compile bug for Flixel backends.
 - Fixed a bug where embedded default assets would not load properly.
 
-
 ## [1.4.0] - 2022-01-17
 This release marks the migration of the project documentation to [polymod.io](https://polymod.io), a new website for the project hosted by Github Pages.
 ### Added
@@ -286,7 +123,6 @@ This release marks the migration of the project documentation to [polymod.io](ht
 ### Fixed
 - Fixed a crash bug which occured when LimeBackend was used without a `frameworkParams` argument.
 - Fixed a bug where `MOD_LOAD_PREPARE` and `MOD_LOAD_DONE` were showing as errors rather than notices.
-
 
 ## [1.3.1] - 2021-12-05
 ### New Contributors

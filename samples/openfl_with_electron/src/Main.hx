@@ -49,6 +49,9 @@ class Main extends Sprite
 
 	private function onError(error:PolymodError)
 	{
-		trace('[${error.severity}] (${Std.string(error.code).toUpperCase()}): ${error.message}');
+		if (error.severity != PolymodErrorType.NOTICE)
+		{
+			trace('[${error.severity}] (${error.code.toUpperCase()}): ${error.message}');
+		}
 	}
 }

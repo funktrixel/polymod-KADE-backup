@@ -1,16 +1,16 @@
 package polymod.hscript;
 
-import haxe.Json;
+import polymod.Polymod.PolymodErrorCode;
 import polymod.Polymod;
-import polymod.util.Util;
+import polymod.Polymod.PolymodErrorCode;
+import haxe.Json;
 
-#if hscript
 /**
  * This interface triggers the execution of a macro on any elements which use the `@:hscript` annotation.
  * Adding the annotation to the function will cause the associate script to be executed.
  * Adding the annotation to the class will allow specification of additional parameters which apply to all annotated functions.
  */
-@:autoBuild(polymod.hscript._internal.HScriptableMacro.build())
+@:autoBuild(polymod.hscript.HScriptMacro.build())
 interface HScriptable
 {
 }
@@ -235,7 +235,10 @@ class ScriptRunner
 
 	static inline function scriptPath(pathName:String):String
 	{
-		return Util.pathJoin('${PolymodConfig.scriptLibrary}:${PolymodConfig.rootPath}', '$pathName${PolymodConfig.scriptExt}');
+		return haxe.io.Path.join([
+			'${PolymodConfig.scriptLibrary}:${PolymodConfig.rootPath}',
+			'$pathName${PolymodConfig.scriptExt}'
+		]);
 	}
 
 	public function get(name:String, ?assetHandler:Dynamic = null):Script
@@ -263,7 +266,7 @@ class ScriptRunner
 		var script = get(name, assetHandler);
 		if (script == null)
 		{
-			Polymod.error(PolymodErrorCode.SCRIPT_NOT_FOUND, 'Could not load script $name for execution.');
+			Polymod.error(PolymodErrorCode.SCRIPT_NOT_LOADED, 'Could not load script $name for execution.');
 		}
 		return script.execute();
 	}
@@ -271,30 +274,29 @@ class ScriptRunner
 
 class Script
 {
-	private static var parser:polymod.hscript._internal.PolymodParserEx;
+	private static var parser:hscript.Parser;
 
 	public var program:hscript.Expr;
-	public var interp:polymod.hscript._internal.PolymodInterpEx;
+	public var interp:hscript.Interp;
 
-	public static function buildParser():polymod.hscript._internal.PolymodParserEx
+	public static function buildParser():hscript.Parser
 	{
-		return new polymod.hscript._internal.PolymodParserEx();
+		return new polymod.hscript.PolymodParserEx();
 	}
 
-	public static function buildInterp():polymod.hscript._internal.PolymodInterpEx
+	public static function buildInterp():hscript.Interp
 	{
-		// Arguments are only needed in a scripted class context.
-		return new polymod.hscript._internal.PolymodInterpEx(null, null);
+		return new hscript.Interp();
 	}
 
-	public function new(script:String, ?origin:String = null)
+	public function new(script:String)
 	{
 		if (parser == null)
 		{
 			parser = buildParser();
 			parser.allowTypes = true;
 		}
-		program = parser.parseString(script, origin);
+		program = parser.parseString(script);
 		interp = buildInterp();
 	}
 
@@ -312,4 +314,3 @@ class Script
 		};
 	}
 }
-#end

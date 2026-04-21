@@ -1,33 +1,28 @@
 package polymod.fs;
 
-import thx.semver.VersionRule;
 import haxe.io.Bytes;
 import polymod.Polymod.ModMetadata;
 
-/**
- * Provides factory and utility functions for instantiating an IFileSystem.
- */
 class PolymodFileSystem
 {
 	/**
 	 * Constructs a new PolymodFileSystem.
-	 		* @param cls An input file system. Might be an IFileSystem or a Class<IFileSystem>.
+	    * @param cls An input file system. Might be an IFileSystem or a Class<IFileSystem>.
 	 */
 	public static function makeFileSystem(cls:Dynamic = null, params:PolymodFileSystemParams):IFileSystem
 	{
 		if (cls == null)
 		{
-			// No IFileSystem provided, choose one to use as default.
+			// We need to determine the class to instantiate.
 			return _detectFileSystem(params);
 		}
-		else if (Std.isOfType(cls, IFileSystem))
+		else if (cls is IFileSystem)
 		{
-			// This is an IFileSystem object, no need to instantiate.
 			return cls;
 		}
-		else if (Std.isOfType(cls, Class))
+		else if (cls is Class)
 		{
-			// This is an IFileSystem class, instantiate it with the parameters.
+			// Else, instantiate the provided class.
 			return cast Type.createInstance(cls, [params]);
 		}
 		else
@@ -43,14 +38,10 @@ class PolymodFileSystem
 	static function _detectFileSystem(params:PolymodFileSystemParams)
 	{
 		#if sys
-		// Sys/native file system.
 		return new polymod.fs.SysFileSystem(params);
 		#elseif nodefs
-		// Node file system.
 		return new polymod.fs.NodeFileSystem(params);
 		#else
-		// No compatible file system.
-		// If you're on HTML5, you should use MemoryFileSystem or ZipFileSystem.
 		return new polymod.fs.StubFileSystem(params);
 		#end
 	}
@@ -121,11 +112,9 @@ interface IFileSystem
 
 	/**
 	 * Provide a list of valid mods for this file system to load.
-	 * 
-	 * @param apiVersionRule (optional) A version query to match against the mod's API version.
-	 * @return An array of matching mods.
+	 * @return An array of mod IDs.
 	 */
-	public function scanMods(?apiVersionRule:VersionRule):Array<ModMetadata>;
+	public function scanMods():Array<String>;
 
 	/**
 	 * Provides the metadata for a given mod. Returns null if the mod does not exist.

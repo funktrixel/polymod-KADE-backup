@@ -1,3 +1,8 @@
-[
-    { "op": "replace", "path": "$..value", "value": "chocolate"}
-]
+{
+	"merge":[
+		{
+			"target":"object_2",
+			"payload":{"value":"hibiscus"}
+		}
+	]
+}
